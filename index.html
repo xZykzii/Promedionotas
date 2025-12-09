@@ -2,1412 +2,475 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Control de cuotas</title>
+  <title>Promedios por Asignatura</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- PWA -->
-  <link rel="manifest" href="./manifest.json" />
-  <meta name="theme-color" content="#000000" />
-
-  <!-- Registro del Service Worker -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("./sw.js")
-          .catch(err => console.error("SW registration failed", err));
-      });
-    }
-  </script>
-
   <style>
     :root {
-      --bg-main: #020617;
-      --bg-card: rgba(15,23,42,0.96);
-      --border-subtle: #1f2937;
-      --accent: #22c55e;
-      --accent-soft: rgba(34,197,94,0.12);
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --text: #e5e5e5;
+      --text-soft: #bbbbbb;
+      --input-bg: #262626;
+      --input-border: #3d3d3d;
+      --accent: #2563eb;
       --danger: #ef4444;
-      --danger-soft: rgba(248,113,113,0.16);
-      --warning: #facc15;
-      --warning-soft: rgba(250,204,21,0.18);
-      --text-main: #e5e7eb;
-      --text-muted: #9ca3af;
-      --text-soft: #6b7280;
-    }
+      --tag-ok-bg: #14532d;
+      --tag-ok-text: #bbf7d0;
+      --tag-bad-bg: #450a0a;
+      --tag-bad-text: #fecaca;
 
-    * {
-      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top, #111827 0, #020617 45%, #000000 100%);
-      color: var(--text-main);
       margin: 0;
-      padding: 24px 16px;
-      min-height: 100vh;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
     }
 
-    .card {
-      width: 100%;
-      max-width: 1150px;
+    .app {
+      max-width: 1100px;
       margin: 0 auto;
-      background: var(--bg-card);
-      border-radius: 18px;
-      padding: 18px 18px 20px;
-      box-shadow:
-        0 24px 60px rgba(0,0,0,0.9),
-        0 0 0 1px rgba(15,23,42,0.8);
-      border: 1px solid var(--border-subtle);
-      backdrop-filter: blur(18px);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: -40%;
-      background:
-        radial-gradient(circle at top left, rgba(34,197,94,0.12), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(56,189,248,0.08), transparent 55%);
-      opacity: 0.8;
-      pointer-events: none;
-      z-index: -1;
     }
 
     h1 {
-      font-size: 26px;
-      margin-bottom: 4px;
+      margin-top: 0;
+      font-size: 1.6rem;
       text-align: center;
-      letter-spacing: 0.04em;
-      background: linear-gradient(120deg, #22c55e, #a855f7, #38bdf8);
-      -webkit-background-clip: text;
-      color: transparent;
+      color: var(--text);
     }
 
-    .subtitle {
-      text-align: center;
-      margin: 0 0 14px;
-      font-size: 13px;
-      color: var(--text-soft);
-    }
-
-    /* LOGIN */
-    #login-box {
-      text-align: center;
-      margin-bottom: 16px;
-      padding: 12px 12px 14px;
-      border-radius: 12px;
-      border: 1px dashed #27272a;
-      background: rgba(15,23,42,0.85);
-    }
-
-    #login-box p {
-      margin-bottom: 8px;
-      color: var(--text-main);
-    }
-
-    #login-info {
-      font-size: 12px;
-      color: var(--text-muted) !important;
-      margin-top: 6px;
-    }
-
-    /* TOP BAR */
-    .top-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      background: radial-gradient(circle at top left, rgba(31,41,55,0.9), rgba(15,23,42,0.96));
-      border: 1px solid rgba(55,65,81,0.7);
-    }
-
-    .top-bar-left,
-    .top-bar-right {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .top-bar-left span {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    /* FORM */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
-      gap: 10px;
-      margin-bottom: 12px;
-      margin-top: 4px;
-    }
-
-    label {
-      font-size: 11px;
-      color: var(--text-muted);
-      display: block;
-      margin-bottom: 3px;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-
-    input,
-    select {
-      width: 100%;
-      padding: 7px 9px;
-      border-radius: 8px;
-      border: 1px solid #4b5563;
-      background: #020617;
-      color: var(--text-main);
-      font-size: 14px;
-      box-sizing: border-box;
-      transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, transform 0.05s ease;
-    }
-
-    input::placeholder {
-      color: var(--text-soft);
-      font-size: 12px;
-    }
-
-    select {
-      padding-right: 26px;
-      background-image: linear-gradient(45deg, transparent 50%, #9ca3af 50%),
-                        linear-gradient(135deg, #9ca3af 50%, transparent 50%);
-      background-position: calc(100% - 14px) 9px, calc(100% - 9px) 9px;
-      background-size: 6px 6px, 6px 6px;
-      background-repeat: no-repeat;
-      appearance: none;
-    }
-
-    input:focus,
-    select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent-soft), 0 0 0 1px rgba(15,23,42,0.9);
-      background: #020617;
-      transform: translateY(-0.5px);
-    }
-
-    .inline-group {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    /* BUTTONS */
+    /* Botones */
     button {
       border: none;
       border-radius: 999px;
-      padding: 7px 12px;
-      font-size: 13px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
       cursor: pointer;
-      background: var(--accent);
-      color: #0b1120;
-      font-weight: 600;
-      transition:
-        transform 0.06s ease,
-        box-shadow 0.08s ease,
-        background 0.12s ease,
-        filter 0.12s ease;
-      white-space: nowrap;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
     }
 
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 26px rgba(34,197,94,0.35);
-      background: #16a34a;
-      filter: brightness(1.03);
-    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-secondary { background: #333; color: var(--text); }
+    .btn-danger { background: var(--danger); color: white; }
 
-    button:active {
-      transform: translateY(0);
-      box-shadow: none;
-      filter: brightness(0.98);
-    }
-
-    .danger-btn {
-      background: var(--danger);
-      color: #fee2e2;
-    }
-
-    .danger-btn:hover {
-      background: #dc2626;
-      box-shadow: 0 10px 22px var(--danger-soft);
-    }
-
-    .warning-btn {
-      background: var(--warning);
-      color: #1a1a1a;
-    }
-
-    .warning-btn:hover {
-      background: #eab308;
-      box-shadow: 0 10px 22px var(--warning-soft);
-    }
-
-    button[disabled] {
-      opacity: 0.4 !important;
-      cursor: default !important;
-      box-shadow: none !important;
-      transform: none !important;
-      filter: none !important;
-    }
-
-    /* FILTER BAR */
-    .filter-bar {
+    .top-bar {
+      margin-bottom: 16px;
       display: flex;
+      justify-content: center;
+      gap: 10px;
       flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 8px;
-      margin-top: 6px;
-      padding: 6px 8px;
-      border-radius: 10px;
-      background: rgba(15,23,42,0.85);
-      border: 1px solid #27272a;
     }
 
-    .filter-bar input {
-      max-width: 260px;
+    /* Tarjetas de ramos: máximo ~2 por fila */
+    .subjects-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 16px;
     }
 
-    .filter-bar label {
-      margin-bottom: 0;
-    }
-
-    /* TABLE */
-    .table-wrapper {
-      width: 100%;
-      margin-top: 6px;
+    .subject-card {
+      background: var(--card);
       border-radius: 12px;
-      overflow-x: auto;
-      overflow-y: hidden;
-      border: 1px solid #27272a;
-      background: radial-gradient(circle at top, rgba(15,23,42,0.96), rgba(0,0,0,0.98));
-      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .subject-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
-      min-width: 640px;
+      font-size: 0.85rem;
     }
 
     th, td {
-      padding: 7px 9px;
-      border-bottom: 1px solid #111827;
+      border-bottom: 1px solid #2a2a2a;
+      padding: 4px;
       text-align: left;
+      color: var(--text);
+    }
+
+    .note-label {
+      font-weight: 600;
+      color: var(--text);
       white-space: nowrap;
     }
 
-    th {
-      background: linear-gradient(to right, #020617, #020617);
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-    }
-
-    tbody tr:nth-child(even) td { background: #020617; }
-    tbody tr:nth-child(odd)  td { background: #020617; }
-
-    tbody tr:hover td {
-      background: #030712;
-    }
-
-    .right {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .actions {
+    .percent-wrapper {
       display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
-
-    /* SUMMARY */
-    .summary {
-      margin-top: 16px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
-      gap: 12px;
-    }
-
-    .totals-card {
-      border-radius: 12px;
-      border: 1px solid #27272a;
-      padding: 10px;
-      background: radial-gradient(circle at top left, rgba(15,23,42,1), rgba(0,0,0,1));
-      font-size: 13px;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.6);
-    }
-
-    .totals-card h2 {
-      margin: 0 0 6px;
-      font-size: 14px;
-      display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 4px;
     }
 
-    .totals-card h2 small {
-      font-size: 11px;
+    .percent-wrapper span {
+      padding: 4px 6px;
+      background: #333;
+      border-radius: 4px;
+      font-size: 0.8rem;
       color: var(--text-soft);
-      font-weight: 400;
     }
 
-    .person-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 3px;
-      color: var(--text-main);
+    .subject-footer {
+      font-size: 0.85rem;
+      color: var(--text-soft);
     }
 
-    .person-row span:last-child {
-      font-variant-numeric: tabular-nums;
+    .subject-average {
+      font-weight: bold;
+      font-size: 0.95rem;
+      color: var(--text);
     }
 
-    .badge {
+    .tag {
       display: inline-block;
-      margin-top: 6px;
-      padding: 3px 7px;
+      padding: 2px 6px;
       border-radius: 999px;
-      background: rgba(37,99,235,0.14);
-      border: 1px solid rgba(59,130,246,0.5);
-      font-size: 11px;
-      color: #bfdbfe;
+      font-size: 0.7rem;
+      margin-left: 5px;
     }
 
-    .hidden { display: none !important; }
+    .tag-ok { background: var(--tag-ok-bg); color: var(--tag-ok-text); }
+    .tag-bad { background: var(--tag-bad-bg); color: var(--tag-bad-text); }
 
-    /* RESPONSIVE */
-    @media (max-width: 900px) {
-      body {
-        padding-top: 18px;
-      }
-
-      .card {
-        padding: 14px 12px 16px;
-      }
-
-      .table-wrapper {
-        border-radius: 10px;
-      }
+    .global-box {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 12px;
+      background: #111827;
+      border: 1px solid #1e293b;
+      font-size: 0.95rem;
     }
 
-    @media (max-width: 700px) {
-      .summary {
-        grid-template-columns: 1fr;
-      }
-      table {
-        font-size: 12px;
-      }
-      th, td {
-        padding: 5px 7px;
-      }
-      .actions {
-        flex-direction: column;
-      }
-      .top-bar {
-        align-items: flex-start;
-      }
-      .filter-bar input {
-        max-width: 100%;
-      }
-    }
-
-    @media (max-width: 500px) {
-      h1 {
-        font-size: 22px;
-      }
-      .subtitle {
-        font-size: 12px;
-      }
+    .global-main {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--text);
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Control de cuotas 💳</h1>
-    <p class="subtitle">Organiza tus compras en cuotas por persona y tarjeta, con respaldo en la nube.</p>
+  <div class="app">
+    <h1>Promedios por Asignatura</h1>
 
-    <!-- LOGIN CON FIREBASE GOOGLE -->
-    <div id="login-box">
-      <p id="login-texto">Inicia sesión con Google para usar la app.</p>
-      <button id="loginBtn">Iniciar sesión con Google</button>
-      <button id="logoutBtn" class="warning-btn hidden">Cerrar sesión</button>
-      <p id="login-info"></p>
+    <div class="top-bar">
+      <button class="btn-primary" id="addSubjectBtn">Agregar asignatura</button>
+      <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
+      <button class="btn-danger" id="clearAllBtn">Borrar todo</button>
     </div>
 
-    <!-- CONTENIDO DE LA APP -->
-    <div id="contenido" class="hidden">
-      <div class="top-bar">
-        <div class="top-bar-left">
-          <span>Tarjeta activa:</span>
-          <select id="tarjetaActiva"></select>
-          <button id="addTarjetaBtn">Añadir tarjeta</button>
-          <button id="delTarjetaBtn" class="danger-btn">Eliminar tarjeta</button>
-        </div>
-        <div class="top-bar-right">
-          <button id="exportBtn">Exportar backup</button>
-          <button id="importBtn">Importar backup</button>
-          <input id="importFile" type="file" accept="application/json" style="display:none" />
-        </div>
-      </div>
+    <div class="subjects-container" id="subjectsContainer"></div>
 
-      <div style="margin-bottom:8px;color:#9ca3af;font-size:12px;">
-        Cada ítem nuevo se guarda en la tarjeta activa. Tus datos se sincronizan en la nube (Firebase) por cuenta de Google.
-      </div>
-
-      <div class="form-grid">
-        <div>
-          <label>Persona</label>
-          <div class="inline-group">
-            <select id="personaSelect"></select>
-            <button id="addPersonaBtn">+ persona</button>
-            <button id="delPersonaBtn" class="danger-btn">- persona</button>
-          </div>
-          <div style="margin-top:6px;font-size:11px;color:#9ca3af;">
-            Saldo actual: $<span id="saldo-actual-persona">0</span>
-          </div>
-          <div class="inline-group" style="margin-top:4px;">
-            <input id="saldoMonto" type="number" min="0" step="1" placeholder="Agregar saldo a la persona" />
-            <button id="addSaldoBtn">+ saldo</button>
-          </div>
-          <button id="delSaldoBtn" class="danger-btn" style="margin-top:6px;">
-            Borrar saldo
-          </button>
-        </div>
-        <div>
-          <label>Ítem</label>
-          <input id="item" placeholder="Ej: Playstation 5, notebook, etc." />
-        </div>
-        <div>
-          <label>Monto base (valor de la cuota)</label>
-          <input id="monto" type="number" min="0" step="1" placeholder="Ej: 10000" />
-        </div>
-        <div>
-          <label>Cuotas pagadas</label>
-          <input id="cuotasPagadas" type="number" min="0" step="1" placeholder="Ej: 3" />
-        </div>
-        <div>
-          <label>Cuotas totales</label>
-          <input id="cuotasTotales" type="number" min="1" step="1" placeholder="Ej: 12" />
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:6px;flex-wrap:wrap;">
-          <button id="addBtn">Agregar ítem</button>
-          <button id="clearBtn" class="danger-btn">Borrar todo</button>
-        </div>
-      </div>
-
-      <div class="filter-bar">
-        <label for="filtro" style="font-size:12px;color:#9ca3af;">Filtro rápido:</label>
-        <input id="filtro" placeholder="Persona, ítem o tarjeta..." />
-      </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Persona</th>
-              <th>Tarjeta</th>
-              <th>Ítem</th>
-              <th class="right">Monto cuota</th>
-              <th>Cuotas</th>
-              <th class="right">Total contrato</th>
-              <th class="right">Pagado</th>
-              <th class="right">Pendiente</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-body"></tbody>
-        </table>
-      </div>
-
-      <div class="summary">
-        <div class="totals-card">
-          <h2>Resumen tarjeta activa</h2>
-          <div class="person-row">
-            <span>Total contrato:</span>
-            <span>$<span id="res-total-contrato">0</span></span>
-          </div>
-          <div class="person-row">
-            <span>Total pagado:</span>
-            <span>$<span id="res-total-pagado">0</span></span>
-          </div>
-          <div class="person-row">
-            <span>Total pendiente:</span>
-            <span>$<span id="res-total-pendiente">0</span></span>
-          </div>
-          <div class="person-row">
-            <span>Cuota mensual estimada:</span>
-            <span>$<span id="res-cuota-mensual">0</span></span>
-          </div>
-          <span class="badge">Basado en una cuota por mes por ítem pendiente</span>
-        </div>
-
-        <div class="totals-card">
-          <h2>Pendiente por persona</h2>
-          <div id="totales-persona"></div>
-        </div>
-
-        <div class="totals-card">
-          <h2>Pendiente por tarjeta</h2>
-          <div id="totales-tarjeta"></div>
-        </div>
-
-        <div class="totals-card">
-          <h2>Cuota mensual por persona <small>(tarjeta activa)</small></h2>
-          <div id="totales-mensual-persona"></div>
-        </div>
-      </div>
+    <div class="global-box">
+      Promedio general (usando promedios redondeados de cada ramo):
+      <div class="global-main" id="globalAverage">-</div>
     </div>
   </div>
 
-  <!-- JS: Firebase + lógica -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      setDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <script>
+    const STORAGE_KEY = "promedios_dark_v2";
+    const subjectsContainer = document.getElementById("subjectsContainer");
+    const globalAverageEl = document.getElementById("globalAverage");
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCG1b1R2NP12kqQ6hsvI80Ajv56biQoebc",
-      authDomain: "tarjeta-cuotas.firebaseapp.com",
-      projectId: "tarjeta-cuotas",
-      storageBucket: "tarjeta-cuotas.firebasestorage.app",
-      messagingSenderId: "469467519102",
-      appId: "1:469467519102:web:d3032a02ff1a53a527602f",
-      measurementId: "G-49RR054112"
+    // Regla de redondeo especial:
+    // si parte decimal >= 0.45, sube; si no, se queda abajo
+    function customRound(value) {
+      const decimal = value - Math.floor(value);
+      return decimal >= 0.45 ? Math.ceil(value) : Math.floor(value);
+    }
+
+    function handleChange() {
+      saveToStorage();
+      calculateAll();
+    }
+
+    function updateNoteLabels(card) {
+      const rows = card.querySelectorAll("tbody tr");
+      rows.forEach((tr, idx) => {
+        const label = tr.querySelector(".note-label");
+        if (label) label.textContent = "Nota " + (idx + 1);
+      });
+    }
+
+    /* === Crear tarjeta de asignatura === */
+    function createSubjectCard(data = {}) {
+      const card = document.createElement("div");
+      card.className = "subject-card";
+
+      const header = document.createElement("div");
+      header.className = "subject-header";
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = "Nombre asignatura";
+      nameInput.value = data.name || "";
+      nameInput.addEventListener("input", handleChange);
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "Eliminar";
+      deleteBtn.className = "btn-danger";
+      deleteBtn.style.fontSize = "0.75rem";
+      deleteBtn.addEventListener("click", () => {
+        card.remove();
+        handleChange();
+      });
+
+      header.appendChild(nameInput);
+      header.appendChild(deleteBtn);
+
+      // Tabla
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th></th><th>Nota</th><th>%</th><th></th>
+          </tr>
+        </thead>
+      `;
+      const tbody = document.createElement("tbody");
+      table.appendChild(tbody);
+
+      function addEval(row = {}) {
+        const tr = document.createElement("tr");
+
+        const tdLabel = document.createElement("td");
+        tdLabel.className = "note-label";
+
+        const tdGrade = document.createElement("td");
+        const gradeInput = document.createElement("input");
+        gradeInput.type = "number";
+        gradeInput.min = "1";
+        gradeInput.max = "7";
+        gradeInput.step = "0.1";
+        gradeInput.placeholder = "Nota";
+        gradeInput.value = row.grade || "";
+        gradeInput.addEventListener("input", handleChange);
+        tdGrade.appendChild(gradeInput);
+
+        const tdPercent = document.createElement("td");
+        const pWrap = document.createElement("div");
+        pWrap.className = "percent-wrapper";
+        const percentInput = document.createElement("input");
+        percentInput.type = "number";
+        percentInput.min = "0";
+        percentInput.step = "0.1";
+        percentInput.placeholder = "%";
+        percentInput.value = row.percent || "";
+        percentInput.addEventListener("input", handleChange);
+        const percentSpan = document.createElement("span");
+        percentSpan.textContent = "%";
+        pWrap.appendChild(percentInput);
+        pWrap.appendChild(percentSpan);
+        tdPercent.appendChild(pWrap);
+
+        const tdActions = document.createElement("td");
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "X";
+        delBtn.className = "btn-danger";
+        delBtn.style.fontSize = "0.75rem";
+        delBtn.style.padding = "2px 6px";
+        delBtn.addEventListener("click", () => {
+          tr.remove();
+          updateNoteLabels(card);
+          handleChange();
+        });
+        tdActions.appendChild(delBtn);
+
+        tr.appendChild(tdLabel);
+        tr.appendChild(tdGrade);
+        tr.appendChild(tdPercent);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+        updateNoteLabels(card);
+      }
+
+      if (data.evaluations && data.evaluations.length) {
+        data.evaluations.forEach(ev => addEval(ev));
+      } else {
+        addEval();
+      }
+
+      const addEvalBtn = document.createElement("button");
+      addEvalBtn.textContent = "Agregar nota";
+      addEvalBtn.className = "btn-secondary";
+      addEvalBtn.style.fontSize = "0.8rem";
+      addEvalBtn.addEventListener("click", () => {
+        addEval();
+        handleChange();
+      });
+
+      const footer = document.createElement("div");
+      footer.className = "subject-footer";
+      footer.innerHTML = `
+        Promedio asignatura:
+        <span class="subject-average">-</span><br>
+        Suma %: <strong class="subject-weight">0%</strong>
+        <span class="subject-tag tag"></span>
+      `;
+
+      card.appendChild(header);
+      card.appendChild(table);
+      card.appendChild(addEvalBtn);
+      card.appendChild(footer);
+
+      subjectsContainer.appendChild(card);
+      updateNoteLabels(card);
+    }
+
+    /* === Guardar datos === */
+    function saveToStorage() {
+      const subjectsData = [];
+
+      subjectsContainer.querySelectorAll(".subject-card").forEach(card => {
+        const name = card.querySelector(".subject-header input").value;
+        const evals = [];
+
+        card.querySelectorAll("tbody tr").forEach(tr => {
+          const inputs = tr.querySelectorAll("input");
+          const grade = inputs[0].value;
+          const percent = inputs[1].value;
+          evals.push({ grade, percent });
+        });
+
+        subjectsData.push({ name, evaluations: evals });
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(subjectsData));
+    }
+
+    /* === Cargar datos === */
+    function loadFromStorage() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        createSubjectCard();
+        return;
+      }
+      try {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data) && data.length) {
+          data.forEach(d => createSubjectCard(d));
+        } else {
+          createSubjectCard();
+        }
+      } catch {
+        createSubjectCard();
+      }
+    }
+
+    /* === Calcular promedios === */
+    function calculateAll() {
+      let subjects = 0;
+      let sumNormal = 0;
+      let sumRounded = 0;
+
+      subjectsContainer.querySelectorAll(".subject-card").forEach(card => {
+        const rows = card.querySelectorAll("tbody tr");
+        let totalW = 0;
+        let weighted = 0;
+
+        rows.forEach(tr => {
+          const inputs = tr.querySelectorAll("input");
+          const grade = parseFloat(inputs[0].value);
+          const percent = parseFloat(inputs[1].value);
+          if (!isNaN(grade) && !isNaN(percent)) {
+            totalW += percent;
+            weighted += grade * percent;
+          }
+        });
+
+        const avgNode = card.querySelector(".subject-average");
+        const wNode = card.querySelector(".subject-weight");
+        const tagNode = card.querySelector(".subject-tag");
+
+        if (totalW > 0) {
+          const avg = weighted / totalW;        // promedio normal
+          const rounded = customRound(avg);     // promedio redondeado con tu regla
+
+          avgNode.innerHTML = `
+            Normal: ${avg.toFixed(2)}<br>
+            Redondeado: <strong>${rounded}</strong>
+          `;
+
+          wNode.textContent = totalW.toFixed(1) + "%";
+
+          if (Math.abs(totalW - 100) < 1) {
+            tagNode.textContent = "OK";
+            tagNode.className = "subject-tag tag tag-ok";
+          } else {
+            tagNode.textContent = "No suma 100%";
+            tagNode.className = "subject-tag tag tag-bad";
+          }
+
+          subjects++;
+          sumNormal += avg;
+          sumRounded += rounded;
+        } else {
+          avgNode.textContent = "-";
+          wNode.textContent = "0%";
+          tagNode.textContent = "";
+          tagNode.className = "subject-tag tag";
+        }
+      });
+
+      if (subjects === 0) {
+        globalAverageEl.textContent = "-";
+      } else {
+        const generalNormal = sumNormal / subjects;
+        const generalRounded = sumRounded / subjects;
+
+        globalAverageEl.innerHTML = `
+          Normal: ${generalNormal.toFixed(2)}<br>
+          Con redondeados: <strong>${generalRounded.toFixed(2)}</strong>
+        `;
+      }
+    }
+
+    /* === Botones === */
+    document.getElementById("addSubjectBtn").onclick = () => {
+      createSubjectCard();
+      handleChange();
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    const db = getFirestore(app);
+    document.getElementById("recalcAllBtn").onclick = calculateAll;
 
-    // Estado
-    let items = [];
-    let tarjetas = [];
-    let personas = [];
-    let tarjetaActiva = "";
-    let personaSeleccionada = "";
-    let currentUser = null;
-    let saldos = {}; // saldo por persona
-
-    // Helpers UI
-    const contenido   = document.getElementById("contenido");
-    const loginTexto  = document.getElementById("login-texto");
-    const loginInfo   = document.getElementById("login-info");
-    const loginBtn    = document.getElementById("loginBtn");
-    const logoutBtn   = document.getElementById("logoutBtn");
-    const tablaBody   = document.getElementById("tabla-body");
-    const filtroInput = document.getElementById("filtro");
-    const saldoActualSpan = document.getElementById("saldo-actual-persona");
-
-    function formatCLP(num) {
-      return (Number(num) || 0).toLocaleString("es-CL");
-    }
-
-    function calcularFactor(pagadas, totales) {
-      const p = Number(pagadas) || 0;
-      const t = Number(totales) || 0;
-      if (t <= 0) return 0;
-      const f = t - p;
-      return f > 0 ? f : 0;
-    }
-
-    function updateSaldoUI() {
-      if (!personaSeleccionada) {
-        saldoActualSpan.textContent = "0";
-        return;
+    document.getElementById("clearAllBtn").onclick = () => {
+      if (confirm("¿Seguro que quieres borrar todo?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        subjectsContainer.innerHTML = "";
+        createSubjectCard();
+        calculateAll();
       }
-      const saldo = saldos[personaSeleccionada] || 0;
-      saldoActualSpan.textContent = formatCLP(saldo);
-    }
-
-    async function saveUserData() {
-      if (!currentUser) return;
-      const uid = currentUser.uid;
-
-      const cleanedItems = items.map(it => ({
-        persona: it.persona,
-        tarjeta: it.tarjeta,
-        item:    it.item,
-        monto:   it.monto,
-        pagadas: it.pagadas,
-        totales: it.totales,
-        completedAt: it.completedAt || null
-      }));
-
-      await setDoc(
-        doc(db, "users", uid),
-        {
-          items: cleanedItems,
-          tarjetas,
-          personas,
-          tarjetaActiva,
-          saldos
-        },
-        { merge: true }
-      );
-    }
-
-    async function loadUserData() {
-      if (!currentUser) return;
-      const uid = currentUser.uid;
-
-      const ref = doc(db, "users", uid);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        items        = data.items        || [];
-        tarjetas     = data.tarjetas     || [];
-        personas     = data.personas     || [];
-        tarjetaActiva = data.tarjetaActiva || (tarjetas[0] || "");
-        saldos       = data.saldos && typeof data.saldos === "object" ? data.saldos : {};
-      } else {
-        items    = [];
-        tarjetas = ["Tarjeta 1", "Tarjeta 2"];
-        personas = ["Persona 1", "Persona 2"];
-        tarjetaActiva = tarjetas[0];
-        saldos = {};
-        await saveUserData();
-      }
-
-      // Normalizar items
-      items.forEach(it => {
-        if (it.pagadas === undefined) it.pagadas = 0;
-        if (it.totales === undefined || it.totales <= 0) it.totales = 1;
-        if (it.monto === undefined) it.monto = 0;
-
-        if (typeof it.completedAt !== "number") {
-          it.completedAt = null;
-        }
-
-        it.factor = calcularFactor(it.pagadas, it.totales);
-        it.total  = it.monto * it.factor;
-      });
-
-      cleanupCompletedItems();
-
-      if (!Array.isArray(tarjetas) || tarjetas.length === 0) {
-        tarjetas = ["Tarjeta 1", "Tarjeta 2"];
-      }
-      if (!tarjetaActiva || !tarjetas.includes(tarjetaActiva)) {
-        tarjetaActiva = tarjetas[0];
-      }
-      if (!Array.isArray(personas) || personas.length === 0) {
-        personas = ["Persona 1", "Persona 2"];
-      }
-      personaSeleccionada = personas[0];
-
-      renderTarjetasSelect();
-      renderPersonasSelect();
-      renderTabla();
-      updateSaldoUI();
-    }
-
-    // Borra ítems que llevan más de 10 minutos completos
-    function cleanupCompletedItems() {
-      const now = Date.now();
-      let changed = false;
-
-      items = items.filter(it => {
-        if (it.pagadas >= it.totales && it.completedAt) {
-          const diff = now - it.completedAt;
-          if (diff > 10 * 60 * 1000) { // 10 minutos
-            changed = true;
-            return false;
-          }
-        }
-        return true;
-      });
-
-      if (changed && currentUser) {
-        saveUserData();
-      }
-    }
-
-    function requireLogin() {
-      if (!currentUser) {
-        alert("Primero inicia sesión con Google.");
-        return false;
-      }
-      return true;
-    }
-
-    // Selects
-    function renderTarjetasSelect() {
-      const select = document.getElementById("tarjetaActiva");
-      select.innerHTML = "";
-      tarjetas.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t;
-        opt.textContent = t;
-        if (t === tarjetaActiva) opt.selected = true;
-        select.appendChild(opt);
-      });
-    }
-
-    function renderPersonasSelect() {
-      const select = document.getElementById("personaSelect");
-      select.innerHTML = "";
-      personas.forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p;
-        opt.textContent = p;
-        select.appendChild(opt);
-      });
-      if (personas.includes(personaSeleccionada)) {
-        select.value = personaSeleccionada;
-      } else {
-        personaSeleccionada = personas[0];
-        select.value = personaSeleccionada;
-      }
-      updateSaldoUI();
-    }
-
-    // Tabla + resumen
-    function getFilteredItems() {
-      const filtro = filtroInput.value.toLowerCase().trim();
-      let activos = items.filter(it => it.tarjeta === tarjetaActiva);
-      if (filtro) {
-        activos = activos.filter(it => {
-          const txt = (it.persona + " " + it.item + " " + it.tarjeta).toLowerCase();
-          return txt.includes(filtro);
-        });
-      }
-      return activos;
-    }
-
-    function renderTabla() {
-      cleanupCompletedItems();
-
-      tablaBody.innerHTML = "";
-      const activos = getFilteredItems();
-
-      let totalContratoTarjeta  = 0;
-      let totalPagadoTarjeta    = 0;
-      let totalPendienteTarjeta = 0;
-      let cuotaMensualGlobal    = 0;
-
-      const porPersonaPendiente = {};
-      const porTarjetaPendiente = {};
-      const mensualPorPersona   = {};
-
-      activos.forEach(it => {
-        const idx = items.indexOf(it);
-        const tr  = document.createElement("tr");
-
-        const totalContrato = it.monto * it.totales;
-        const pagado        = it.monto * it.pagadas;
-        const pendiente     = it.total;
-
-        totalContratoTarjeta  += totalContrato;
-        totalPagadoTarjeta    += pagado;
-        totalPendienteTarjeta += pendiente;
-
-        if (it.pagadas < it.totales) {
-          cuotaMensualGlobal += it.monto;
-          mensualPorPersona[it.persona] = (mensualPorPersona[it.persona] || 0) + it.monto;
-        }
-
-        porPersonaPendiente[it.persona] = (porPersonaPendiente[it.persona] || 0) + pendiente;
-
-        const tdPersona = document.createElement("td");
-        tdPersona.textContent = it.persona;
-        tr.appendChild(tdPersona);
-
-        const tdTarjeta = document.createElement("td");
-        tdTarjeta.textContent = it.tarjeta || "-";
-        tr.appendChild(tdTarjeta);
-
-        const tdItem = document.createElement("td");
-        tdItem.textContent = it.item;
-        tr.appendChild(tdItem);
-
-        const tdMonto = document.createElement("td");
-        tdMonto.className = "right";
-        tdMonto.textContent = "$" + formatCLP(it.monto);
-        tr.appendChild(tdMonto);
-
-        const tdCuotas = document.createElement("td");
-        tdCuotas.textContent = `${it.pagadas}/${it.totales}`;
-        tr.appendChild(tdCuotas);
-
-        const tdTotalContrato = document.createElement("td");
-        tdTotalContrato.className = "right";
-        tdTotalContrato.textContent = "$" + formatCLP(totalContrato);
-        tr.appendChild(tdTotalContrato);
-
-        const tdPagado = document.createElement("td");
-        tdPagado.className = "right";
-        tdPagado.textContent = "$" + formatCLP(pagado);
-        tr.appendChild(tdPagado);
-
-        const tdPendiente = document.createElement("td");
-        tdPendiente.className = "right";
-        tdPendiente.textContent = "$" + formatCLP(pendiente);
-        tr.appendChild(tdPendiente);
-
-        const tdAcciones = document.createElement("td");
-        const actionsDiv = document.createElement("div");
-        actionsDiv.className = "actions";
-
-        const pagarBtn = document.createElement("button");
-        pagarBtn.textContent = "Pagar cuota";
-        pagarBtn.addEventListener("click", async () => {
-          if (!requireLogin()) return;
-          await pagarCuota(idx);
-        });
-
-        const deshacerBtn = document.createElement("button");
-        deshacerBtn.textContent = "Deshacer cuota";
-        deshacerBtn.className = "warning-btn";
-        deshacerBtn.addEventListener("click", async () => {
-          if (!requireLogin()) return;
-          await deshacerCuota(idx);
-        });
-
-        const borrarBtn = document.createElement("button");
-        borrarBtn.textContent = "Borrar";
-        borrarBtn.className = "danger-btn";
-        borrarBtn.addEventListener("click", async () => {
-          if (!requireLogin()) return;
-          await borrarFila(idx);
-        });
-
-        if (it.pagadas >= it.totales) {
-          pagarBtn.disabled = true;
-        }
-        if (it.pagadas <= 0) {
-          deshacerBtn.disabled = true;
-        }
-
-        actionsDiv.appendChild(pagarBtn);
-        actionsDiv.appendChild(deshacerBtn);
-        actionsDiv.appendChild(borrarBtn);
-        tdAcciones.appendChild(actionsDiv);
-        tr.appendChild(tdAcciones);
-
-        tablaBody.appendChild(tr);
-      });
-
-      // Resumen tarjeta activa
-      document.getElementById("res-total-contrato").textContent  = formatCLP(totalContratoTarjeta);
-      document.getElementById("res-total-pagado").textContent    = formatCLP(totalPagadoTarjeta);
-      document.getElementById("res-total-pendiente").textContent = formatCLP(totalPendienteTarjeta);
-      document.getElementById("res-cuota-mensual").textContent   = formatCLP(cuotaMensualGlobal);
-
-      // Pendiente por persona
-      const contPers = document.getElementById("totales-persona");
-      contPers.innerHTML = "";
-      const personasTot = Object.entries(porPersonaPendiente);
-      if (personasTot.length === 0) {
-        contPers.textContent = "Sin datos todavía.";
-      } else {
-        personasTot.forEach(([persona, total]) => {
-          const row = document.createElement("div");
-          row.className = "person-row";
-          row.innerHTML = `<span>${persona}</span><span>$${formatCLP(total)}</span>`;
-          contPers.appendChild(row);
-        });
-      }
-
-      // Pendiente por tarjeta
-      const contTarjeta = document.getElementById("totales-tarjeta");
-      contTarjeta.innerHTML = "";
-      items.forEach(it => {
-        const key = it.tarjeta || "Sin tarjeta";
-        porTarjetaPendiente[key] = (porTarjetaPendiente[key] || 0) + it.total;
-      });
-      const tarjetasTotals = Object.entries(porTarjetaPendiente);
-      if (tarjetasTotals.length === 0) {
-        contTarjeta.textContent = "Sin datos todavía.";
-      } else {
-        tarjetasTotals.forEach(([tarj, total]) => {
-          const row = document.createElement("div");
-          row.className = "person-row";
-          row.innerHTML = `<span>${tarj}</span><span>$${formatCLP(total)}</span>`;
-          contTarjeta.appendChild(row);
-        });
-      }
-
-      // Cuota mensual por persona (tarjeta activa)
-      const contMensualPersona = document.getElementById("totales-mensual-persona");
-      contMensualPersona.innerHTML = "";
-      const mensualTot = Object.entries(mensualPorPersona);
-      if (mensualTot.length === 0) {
-        contMensualPersona.textContent = "Sin cuotas pendientes en esta tarjeta.";
-      } else {
-        mensualTot.forEach(([persona, total]) => {
-          const row = document.createElement("div");
-          row.className = "person-row";
-          row.innerHTML = `<span>${persona}</span><span>$${formatCLP(total)}</span>`;
-          contMensualPersona.appendChild(row);
-        });
-      }
-    }
-
-    // Acciones
-    async function agregarItemDesdeFormulario() {
-      if (!requireLogin()) return;
-
-      const personaSel   = document.getElementById("personaSelect");
-      const itemInput    = document.getElementById("item");
-      const montoInput   = document.getElementById("monto");
-      const pagadasInput = document.getElementById("cuotasPagadas");
-      const totalesInput = document.getElementById("cuotasTotales");
-
-      const persona = personaSel.value || personas[0];
-      const item    = itemInput.value.trim() || "-";
-      const monto   = parseInt(montoInput.value, 10);
-      const pagadas = parseInt(pagadasInput.value, 10) || 0;
-      const totales = parseInt(totalesInput.value, 10) || 0;
-
-      if (isNaN(monto) || monto <= 0) {
-        alert("Pon un monto válido (mayor que 0).");
-        return;
-      }
-      if (totales <= 0) {
-        alert("Pon un número de cuotas totales mayor que 0.");
-        return;
-      }
-      if (pagadas < 0 || pagadas > totales) {
-        alert("Las cuotas pagadas deben estar entre 0 y el total.");
-        return;
-      }
-      if (!tarjetaActiva) {
-        alert("Primero crea o selecciona una tarjeta.");
-        return;
-      }
-
-      const nuevo = {
-        persona,
-        tarjeta: tarjetaActiva,
-        item,
-        monto,
-        pagadas,
-        totales,
-        factor: 0,
-        total: 0,
-        completedAt: null
-      };
-      nuevo.factor = calcularFactor(nuevo.pagadas, nuevo.totales);
-      nuevo.total  = nuevo.monto * nuevo.factor;
-
-      items.push(nuevo);
-      await saveUserData();
-      renderTabla();
-
-      itemInput.value    = "";
-      montoInput.value   = "";
-      pagadasInput.value = "";
-      totalesInput.value = "";
-      itemInput.focus();
-    }
-
-    async function agregarSaldoPersona() {
-      if (!requireLogin()) return;
-      const input = document.getElementById("saldoMonto");
-      const valor = parseInt(input.value, 10);
-      if (isNaN(valor) || valor <= 0) {
-        alert("Ingresa un monto de saldo válido (mayor que 0).");
-        return;
-      }
-      const actual = saldos[personaSeleccionada] || 0;
-      saldos[personaSeleccionada] = actual + valor;
-      input.value = "";
-      await saveUserData();
-      updateSaldoUI();
-    }
-
-    async function borrarSaldoPersona() {
-      if (!requireLogin()) return;
-
-      const persona = personaSeleccionada;
-      if (!persona) return;
-
-      if (!confirm(`¿Seguro que quieres borrar COMPLETAMENTE el saldo de ${persona}?`))
-        return;
-
-      saldos[persona] = 0;
-      await saveUserData();
-      updateSaldoUI();
-      alert(`Saldo de ${persona} eliminado correctamente.`);
-    }
-
-    async function pagarCuota(idx) {
-      const it = items[idx];
-      if (!it) return;
-      if (it.pagadas >= it.totales) return;
-
-      const persona = it.persona;
-      const montoCuota = it.monto;
-      const saldoDisp = saldos[persona] || 0;
-
-      if (saldoDisp < montoCuota) {
-        alert(
-          `Saldo insuficiente para pagar esta cuota.\n` +
-          `Saldo disponible para ${persona}: $${formatCLP(saldoDisp)}\n` +
-          `Monto de la cuota: $${formatCLP(montoCuota)}`
-        );
-        return;
-      }
-
-      saldos[persona] = saldoDisp - montoCuota;
-
-      it.pagadas += 1;
-      it.factor   = calcularFactor(it.pagadas, it.totales);
-      it.total    = it.monto * it.factor;
-
-      if (it.pagadas >= it.totales) {
-        it.completedAt = Date.now();
-      } else {
-        it.completedAt = null;
-      }
-
-      await saveUserData();
-      updateSaldoUI();
-      renderTabla();
-    }
-
-    async function deshacerCuota(idx) {
-      const it = items[idx];
-      if (!it) return;
-      if (it.pagadas <= 0) return;
-
-      const persona = it.persona;
-      const montoCuota = it.monto;
-
-      // devolver saldo a la persona
-      saldos[persona] = (saldos[persona] || 0) + montoCuota;
-
-      it.pagadas -= 1;
-      it.factor   = calcularFactor(it.pagadas, it.totales);
-      it.total    = it.monto * it.factor;
-
-      if (it.pagadas < it.totales) {
-        it.completedAt = null;
-      }
-
-      await saveUserData();
-      updateSaldoUI();
-      renderTabla();
-    }
-
-    async function borrarFila(idx) {
-      if (!confirm("¿Borrar este ítem?")) return;
-      items.splice(idx, 1);
-      await saveUserData();
-      renderTabla();
-    }
-
-    async function limpiarTodo() {
-      if (!requireLogin()) return;
-      if (!confirm("¿Seguro que quieres borrar TODOS los ítems de esta cuenta?")) return;
-      items = [];
-      await saveUserData();
-      renderTabla();
-    }
-
-    async function añadirTarjeta() {
-      if (!requireLogin()) return;
-      const nombre = prompt("Nombre de la nueva tarjeta (ej: Tarjeta 3):");
-      if (!nombre) return;
-      const n = nombre.trim();
-      if (!n) return;
-      if (tarjetas.includes(n)) {
-        alert("Esa tarjeta ya existe.");
-        return;
-      }
-      tarjetas.push(n);
-      tarjetaActiva = n;
-      await saveUserData();
-      renderTarjetasSelect();
-      renderTabla();
-    }
-
-    async function eliminarTarjeta() {
-      if (!requireLogin()) return;
-      if (!tarjetaActiva) return;
-      if (tarjetas.length <= 1) {
-        alert("Debe quedar al menos una tarjeta.");
-        return;
-      }
-      const asociados = items.filter(it => it.tarjeta === tarjetaActiva).length;
-      const msg = `Se eliminará la tarjeta "${tarjetaActiva}" y ${asociados} ítems asociados.\n¿Quieres continuar?`;
-      if (!confirm(msg)) return;
-
-      items    = items.filter(it => it.tarjeta !== tarjetaActiva);
-      tarjetas = tarjetas.filter(t => t !== tarjetaActiva);
-      if (tarjetas.length === 0) {
-        tarjetas = ["Tarjeta 1"];
-      }
-      tarjetaActiva = tarjetas[0];
-      await saveUserData();
-      renderTarjetasSelect();
-      renderTabla();
-    }
-
-    async function añadirPersona() {
-      if (!requireLogin()) return;
-      const nombre = prompt("Nombre de la nueva persona:");
-      if (!nombre) return;
-      const n = nombre.trim();
-      if (!n) return;
-      if (personas.includes(n)) {
-        alert("Esa persona ya existe.");
-        return;
-      }
-      personas.push(n);
-      if (!(n in saldos)) {
-        saldos[n] = 0;
-      }
-      personaSeleccionada = n;
-      await saveUserData();
-      renderPersonasSelect();
-    }
-
-    async function eliminarPersona() {
-      if (!requireLogin()) return;
-      if (!personaSeleccionada) return;
-      if (personas.length <= 1) {
-        alert("Debe quedar al menos una persona en la lista.");
-        return;
-      }
-      const msg = `Se eliminará la persona "${personaSeleccionada}" de la lista.\nLos ítems existentes seguirán mostrando ese nombre.\n¿Quieres continuar?`;
-      if (!confirm(msg)) return;
-
-      personas = personas.filter(p => p !== personaSeleccionada);
-      delete saldos[personaSeleccionada];
-
-      if (personas.length === 0) {
-        personas = ["Persona 1"];
-        if (!saldos["Persona 1"]) saldos["Persona 1"] = 0;
-      }
-      personaSeleccionada = personas[0];
-      await saveUserData();
-      renderPersonasSelect();
-    }
-
-    function exportarBackup() {
-      if (!requireLogin()) return;
-      const data = {
-        version: 4,
-        uid: currentUser.uid,
-        email: currentUser.email,
-        items,
-        tarjetas,
-        personas,
-        tarjetaActiva,
-        saldos
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json"
-      });
-      const url = URL.createObjectURL(blob);
-      const a   = document.createElement("a");
-      const hoy = new Date().toISOString().slice(0, 10);
-      a.href = url;
-      a.download = "cuotas-backup-" + hoy + ".json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function importarBackupDesdeArchivo(file) {
-      if (!requireLogin()) return;
-
-      const reader = new FileReader();
-      reader.onload = async e => {
-        try {
-          const text = e.target.result;
-
-          let data;
-          try {
-            data = JSON.parse(text);
-          } catch (parseError) {
-            console.error("Error parseando JSON:", parseError);
-            alert("El archivo no es un JSON válido.");
-            return;
-          }
-
-          let importedItems        = [];
-          let importedTarjetas     = [];
-          let importedPersonas     = [];
-          let importedTarjetaActiva = "";
-          let importedSaldos       = {};
-
-          if (Array.isArray(data)) {
-            importedItems = data;
-            importedTarjetas = ["Tarjeta 1"];
-            importedPersonas = ["Persona 1"];
-          } else if (data && Array.isArray(data.items)) {
-            importedItems    = data.items;
-            importedTarjetas = Array.isArray(data.tarjetas) ? data.tarjetas : ["Tarjeta 1"];
-            importedPersonas = Array.isArray(data.personas) ? data.personas : ["Persona 1"];
-            importedTarjetaActiva = data.tarjetaActiva || "";
-            if (data.saldos && typeof data.saldos === "object") {
-              importedSaldos = data.saldos;
-            }
-          } else {
-            console.error("Estructura de backup no reconocida:", data);
-            alert("Archivo de backup inválido o con estructura desconocida.");
-            return;
-          }
-
-          if (!confirm("Esto reemplazará todas las tarjetas, personas, saldos e ítems actuales de ESTA cuenta. ¿Continuar?")) {
-            return;
-          }
-
-          items = importedItems.map(it => {
-            const obj = {
-              persona: it.persona || "Persona 1",
-              tarjeta: it.tarjeta || (importedTarjetas[0] || "Tarjeta 1"),
-              item:    it.item    || "-",
-              monto:   Number(it.monto) || 0,
-              pagadas: Number(it.pagadas) || 0,
-              totales: Number(it.totales) || 1,
-              completedAt: typeof it.completedAt === "number" ? it.completedAt : null
-            };
-            if (obj.totales <= 0) obj.totales = 1;
-            if (obj.pagadas < 0) obj.pagadas = 0;
-            if (obj.pagadas > obj.totales) obj.pagadas = obj.totales;
-            obj.factor = calcularFactor(obj.pagadas, obj.totales);
-            obj.total  = obj.monto * obj.factor;
-            return obj;
-          });
-
-          tarjetas = importedTarjetas && importedTarjetas.length ? importedTarjetas : ["Tarjeta 1"];
-          personas = importedPersonas && importedPersonas.length ? importedPersonas : ["Persona 1"];
-
-          tarjetaActiva = importedTarjetaActiva && tarjetas.includes(importedTarjetaActiva)
-            ? importedTarjetaActiva
-            : tarjetas[0];
-
-          saldos = importedSaldos && typeof importedSaldos === "object" ? importedSaldos : {};
-
-          await saveUserData();
-          renderTarjetasSelect();
-          renderPersonasSelect();
-          renderTabla();
-
-          alert("Backup importado correctamente.");
-        } catch (err) {
-          console.error("Error general importando backup:", err);
-          alert("Error leyendo el archivo de backup.");
-        }
-      };
-
-      reader.readAsText(file);
-    }
-
-    // Eventos de UI
-    document.getElementById("addBtn").addEventListener("click", agregarItemDesdeFormulario);
-    document.getElementById("clearBtn").addEventListener("click", limpiarTodo);
-    document.getElementById("addTarjetaBtn").addEventListener("click", añadirTarjeta);
-    document.getElementById("delTarjetaBtn").addEventListener("click", eliminarTarjeta);
-    document.getElementById("addPersonaBtn").addEventListener("click", añadirPersona);
-    document.getElementById("delPersonaBtn").addEventListener("click", eliminarPersona);
-    document.getElementById("addSaldoBtn").addEventListener("click", agregarSaldoPersona);
-    document.getElementById("delSaldoBtn").addEventListener("click", borrarSaldoPersona);
-    document.getElementById("exportBtn").addEventListener("click", exportarBackup);
-    document.getElementById("importBtn").addEventListener("click", () => {
-      document.getElementById("importFile").value = "";
-      document.getElementById("importFile").click();
-    });
-    document.getElementById("importFile").addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (file) importarBackupDesdeArchivo(file);
-    });
-    document.getElementById("monto").addEventListener("keypress", e => {
-      if (e.key === "Enter") agregarItemDesdeFormulario();
-    });
-    document.getElementById("cuotasTotales").addEventListener("keypress", e => {
-      if (e.key === "Enter") agregarItemDesdeFormulario();
-    });
-    document.getElementById("tarjetaActiva").addEventListener("change", async e => {
-      tarjetaActiva = e.target.value;
-      await saveUserData();
-      renderTabla();
-    });
-    document.getElementById("personaSelect").addEventListener("change", e => {
-      personaSeleccionada = e.target.value;
-      updateSaldoUI();
-    });
-    filtroInput.addEventListener("input", renderTabla);
-
-    // Login / Logout
-    loginBtn.addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (err) {
-        console.error(err);
-        alert("Error al iniciar sesión.");
-      }
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-      } catch (err) {
-        console.error(err);
-      }
-    });
-
-    // Escuchar cambios de auth
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-      if (user) {
-        loginBtn.classList.add("hidden");
-        logoutBtn.classList.remove("hidden");
-        contenido.classList.remove("hidden");
-        loginTexto.textContent = "Sesión iniciada.";
-        loginInfo.textContent = "Sesión iniciada como " + (user.email || "");
-        await loadUserData();
-      } else {
-        loginBtn.classList.remove("hidden");
-        logoutBtn.classList.add("hidden");
-        contenido.classList.add("hidden");
-        loginTexto.textContent = "Inicia sesión con Google para usar la app.";
-        loginInfo.textContent = "";
-      }
-    });
+    };
+
+    /* === Inicio === */
+    loadFromStorage();
+    calculateAll();
   </script>
 </body>
 </html>
