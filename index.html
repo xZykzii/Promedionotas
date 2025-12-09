@@ -1,1 +1,436 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Promedios por Asignatura</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f3f4f6;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+
+    .top-bar {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-secondary { background: #e5e7eb; color: #111; }
+    .btn-danger { background: #ef4444; color: white; }
+
+    /* ===== CONTENEDOR DE TARJETAS ===== */
+    .subjects-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* máx 2 por fila aprox */
+      gap: 16px;
+    }
+
+    .subject-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .subject-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .subject-header input[type="text"] {
+      flex: 1;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid #eee;
+      padding: 4px;
+      text-align: left;
+    }
+
+    .note-label {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.85rem;
+      box-sizing: border-box;
+    }
+
+    .percent-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .percent-wrapper span {
+      padding: 4px 6px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    .subject-footer {
+      font-size: 0.85rem;
+      color: #444;
+    }
+
+    .subject-average {
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      margin-left: 5px;
+    }
+
+    .tag-ok { background: #dcfce7; color: #166534; }
+    .tag-bad { background: #fee2e2; color: #991b1b; }
+
+    .global-box {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 12px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      font-size: 1rem;
+    }
+
+    .global-main {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Promedios por Asignatura</h1>
+
+    <div class="top-bar">
+      <button class="btn-primary" id="addSubjectBtn">Agregar asignatura</button>
+      <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
+      <button class="btn-danger" id="clearAllBtn">Borrar todo</button>
+    </div>
+
+    <div class="subjects-container" id="subjectsContainer"></div>
+
+    <div class="global-box">
+      Promedio general (todas las asignaturas con el mismo peso):
+      <div class="global-main" id="globalAverage">-</div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "promedios_v3";
+
+    const subjectsContainer = document.getElementById("subjectsContainer");
+    const globalAverageEl = document.getElementById("globalAverage");
+
+    function handleChange() {
+      saveToStorage();
+      calculateAll();
+    }
+
+    function updateNoteLabels(card) {
+      const rows = card.querySelectorAll("tbody tr");
+      rows.forEach((tr, idx) => {
+        const labelCell = tr.querySelector(".note-label");
+        if (labelCell) labelCell.textContent = "Nota " + (idx + 1);
+      });
+    }
+
+    /* ------------------- CREAR ASIGNATURA ------------------- */
+    function createSubjectCard(data = {}) {
+      const card = document.createElement("div");
+      card.className = "subject-card";
+
+      // Header
+      const header = document.createElement("div");
+      header.className = "subject-header";
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = "Nombre de la asignatura";
+      nameInput.value = data.name || "";
+      nameInput.addEventListener("input", handleChange);
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "Eliminar ramo";
+      deleteBtn.className = "btn-danger";
+      deleteBtn.style.fontSize = "0.75rem";
+      deleteBtn.addEventListener("click", () => {
+        card.remove();
+        handleChange();
+      });
+
+      header.appendChild(nameInput);
+      header.appendChild(deleteBtn);
+
+      /* ----- Tabla evaluaciones ----- */
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th></th><th>Nota</th><th>%</th><th></th>
+          </tr>
+        </thead>
+      `;
+
+      const tbody = document.createElement("tbody");
+      table.appendChild(tbody);
+
+      function addEval(row = {}) {
+        const tr = document.createElement("tr");
+
+        const tdLabel = document.createElement("td");
+        tdLabel.className = "note-label";
+
+        const tdGrade = document.createElement("td");
+        const gradeInput = document.createElement("input");
+        gradeInput.type = "number";
+        gradeInput.placeholder = "Nota";
+        gradeInput.min = "1";
+        gradeInput.max = "7";
+        gradeInput.step = "0.1";
+        gradeInput.value = row.grade || "";
+        gradeInput.addEventListener("input", handleChange);
+        tdGrade.appendChild(gradeInput);
+
+        const tdPercent = document.createElement("td");
+        const percentWrapper = document.createElement("div");
+        percentWrapper.className = "percent-wrapper";
+        const percentInput = document.createElement("input");
+        percentInput.type = "number";
+        percentInput.placeholder = "%";
+        percentInput.min = "0";
+        percentInput.step = "0.1";
+        percentInput.value = row.percent || "";
+        percentInput.addEventListener("input", handleChange);
+        const percentSpan = document.createElement("span");
+        percentSpan.textContent = "%";
+        percentWrapper.appendChild(percentInput);
+        percentWrapper.appendChild(percentSpan);
+        tdPercent.appendChild(percentWrapper);
+
+        const tdActions = document.createElement("td");
+        const delEvalBtn = document.createElement("button");
+        delEvalBtn.textContent = "X";
+        delEvalBtn.className = "btn-danger";
+        delEvalBtn.style.fontSize = "0.75rem";
+        delEvalBtn.style.padding = "2px 6px";
+        delEvalBtn.addEventListener("click", () => {
+          tr.remove();
+          updateNoteLabels(card);
+          handleChange();
+        });
+        tdActions.appendChild(delEvalBtn);
+
+        tr.appendChild(tdLabel);
+        tr.appendChild(tdGrade);
+        tr.appendChild(tdPercent);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+        updateNoteLabels(card);
+      }
+
+      if (data.evaluations && data.evaluations.length) {
+        data.evaluations.forEach(ev => addEval(ev));
+      } else {
+        addEval();
+      }
+
+      const addEvalBtn = document.createElement("button");
+      addEvalBtn.textContent = "Agregar nota";
+      addEvalBtn.className = "btn-secondary";
+      addEvalBtn.style.fontSize = "0.8rem";
+      addEvalBtn.addEventListener("click", () => {
+        addEval();
+        handleChange();
+      });
+
+      /* Footer */
+      const footer = document.createElement("div");
+      footer.className = "subject-footer";
+      footer.innerHTML = `
+        Promedio asignatura: <span class="subject-average">-</span><br>
+        Suma %: <strong class="subject-weight">0%</strong> <span class="subject-tag tag"></span>
+      `;
+
+      // Ensamblar tarjeta
+      card.appendChild(header);
+      card.appendChild(table);
+      card.appendChild(addEvalBtn);
+      card.appendChild(footer);
+
+      subjectsContainer.appendChild(card);
+      updateNoteLabels(card);
+    }
+
+    /* ------------------- GUARDAR Y CARGAR DATA ------------------- */
+    function saveToStorage() {
+      const subjectsData = [];
+
+      subjectsContainer.querySelectorAll(".subject-card").forEach(card => {
+        const name = card.querySelector(".subject-header input").value;
+        const evals = [];
+
+        card.querySelectorAll("tbody tr").forEach(tr => {
+          const inputs = tr.querySelectorAll("input");
+          const grade = inputs[0].value;
+          const percent = inputs[1].value;
+          evals.push({ grade, percent });
+        });
+
+        subjectsData.push({ name, evaluations: evals });
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(subjectsData));
+    }
+
+    function loadFromStorage() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) { createSubjectCard(); return; }
+
+      try {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data) && data.length) {
+          data.forEach(d => createSubjectCard(d));
+        } else {
+          createSubjectCard();
+        }
+      } catch {
+        createSubjectCard();
+      }
+    }
+
+    /* ------------------- CALCULAR PROMEDIOS ------------------- */
+    function calculateAll() {
+      const cards = subjectsContainer.querySelectorAll(".subject-card");
+
+      let totalSubjects = 0;
+      let sumAverages = 0;
+
+      cards.forEach(card => {
+        const rows = card.querySelectorAll("tbody tr");
+        let totalWeight = 0, weighted = 0;
+
+        rows.forEach(tr => {
+          const inputs = tr.querySelectorAll("input");
+          const grade = parseFloat(inputs[0].value);
+          const percent = parseFloat(inputs[1].value);
+
+          if (!isNaN(grade) && !isNaN(percent)) {
+            totalWeight += percent;
+            weighted += percent * grade;
+          }
+        });
+
+        const avgEl = card.querySelector(".subject-average");
+        const weightEl = card.querySelector(".subject-weight");
+        const tagEl = card.querySelector(".subject-tag");
+
+        if (totalWeight > 0) {
+          const avg = weighted / totalWeight;
+          avgEl.textContent = avg.toFixed(2);
+          weightEl.textContent = totalWeight.toFixed(2) + "%";
+
+          if (Math.abs(totalWeight - 100) < 1) {
+            tagEl.textContent = "OK";
+            tagEl.className = "subject-tag tag tag-ok";
+          } else {
+            tagEl.textContent = "No suma 100%";
+            tagEl.className = "subject-tag tag tag-bad";
+          }
+
+          totalSubjects++;
+          sumAverages += avg;
+        } else {
+          avgEl.textContent = "-";
+          weightEl.textContent = "0%";
+          tagEl.textContent = "";
+          tagEl.className = "subject-tag tag";
+        }
+      });
+
+      if (totalSubjects === 0) {
+        globalAverageEl.textContent = "-";
+      } else {
+        globalAverageEl.textContent = (sumAverages / totalSubjects).toFixed(2);
+      }
+    }
+
+    /* EVENTOS */
+    document.getElementById("addSubjectBtn").onclick = () => {
+      createSubjectCard();
+      handleChange();
+    };
+
+    document.getElementById("recalcAllBtn").onclick = calculateAll;
+
+    document.getElementById("clearAllBtn").onclick = () => {
+      if (confirm("¿Seguro que quieres borrar todo?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        subjectsContainer.innerHTML = "";
+        createSubjectCard();
+        calculateAll();
+      }
+    };
+
+    /* START */
+    loadFromStorage();
+    calculateAll();
+  </script>
+</body>
+</html>
