@@ -55,10 +55,27 @@
     .btn-danger { background: var(--danger); color: white; }
 
     .top-bar {
-      margin-bottom: 16px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: center;
       gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .auth-bar {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      color: var(--text-soft);
+    }
+
+    .auth-right {
+      display: flex;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -178,6 +195,14 @@
   <div class="app">
     <h1>Promedios por Asignatura</h1>
 
+    <div class="auth-bar">
+      <div id="userInfo">Modo local (sin sesión)</div>
+      <div class="auth-right">
+        <button class="btn-primary" id="loginBtn">Iniciar sesión con Google</button>
+        <button class="btn-secondary" id="logoutBtn" style="display:none;">Cerrar sesión</button>
+      </div>
+    </div>
+
     <div class="top-bar">
       <button class="btn-primary" id="addSubjectBtn">Agregar asignatura</button>
       <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
@@ -192,21 +217,53 @@
     </div>
   </div>
 
-  <script>
-    const STORAGE_KEY = "promedios_dark_v2";
+  <!-- Lógica de la app + Firebase -->
+  <script type="module">
+    /* ====== IMPORTS FIREBASE (v10) ====== */
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    /* ====== CONFIGURA TU PROYECTO AQUÍ ====== */
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      // si usas otros campos (storageBucket, appId, etc.) los agregas acá
+    };
+
+    const appFB = initializeApp(firebaseConfig);
+    const auth = getAuth(appFB);
+    const provider = new GoogleAuthProvider();
+    const db = getFirestore(appFB);
+
+    /* ====== DOM ELEMENTS ====== */
     const subjectsContainer = document.getElementById("subjectsContainer");
     const globalAverageEl = document.getElementById("globalAverage");
+    const addSubjectBtn = document.getElementById("addSubjectBtn");
+    const recalcAllBtn = document.getElementById("recalcAllBtn");
+    const clearAllBtn = document.getElementById("clearAllBtn");
+    const userInfoEl = document.getElementById("userInfo");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    // Regla de redondeo especial:
-    // si parte decimal >= 0.45, sube; si no, se queda abajo
+    const LOCAL_STORAGE_KEY = "promedios_dark_v2";
+
+    let currentUser = null; // usuario logeado
+
+    // Redondeo especial: decimal >= 0.45 sube
     function customRound(value) {
       const decimal = value - Math.floor(value);
       return decimal >= 0.45 ? Math.ceil(value) : Math.floor(value);
     }
 
     function handleChange() {
-      saveToStorage();
-      calculateAll();
+      saveData();      // guarda en local y si hay usuario, en Firestore
+      calculateAll();  // recalcula promedios
     }
 
     function updateNoteLabels(card) {
@@ -217,7 +274,7 @@
       });
     }
 
-    /* === Crear tarjeta de asignatura === */
+    /* ====== CREAR TARJETA DE ASIGNATURA ====== */
     function createSubjectCard(data = {}) {
       const card = document.createElement("div");
       card.className = "subject-card";
@@ -243,7 +300,6 @@
       header.appendChild(nameInput);
       header.appendChild(deleteBtn);
 
-      // Tabla
       const table = document.createElement("table");
       table.innerHTML = `
         <thead>
@@ -343,47 +399,79 @@
       updateNoteLabels(card);
     }
 
-    /* === Guardar datos === */
-    function saveToStorage() {
-      const subjectsData = [];
+    /* ====== HIDRATAR UI DESDE DATA ====== */
+    function renderFromData(subjectsData) {
+      subjectsContainer.innerHTML = "";
+      if (Array.isArray(subjectsData) && subjectsData.length) {
+        subjectsData.forEach(d => createSubjectCard(d));
+      } else {
+        createSubjectCard();
+      }
+      calculateAll();
+    }
 
+    /* ====== LECTURA LOCAL / REMOTA ====== */
+    function loadFromLocal() {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (!raw) {
+        renderFromData(null);
+        return;
+      }
+      try {
+        const data = JSON.parse(raw);
+        renderFromData(data);
+      } catch {
+        renderFromData(null);
+      }
+    }
+
+    async function loadFromRemote(user) {
+      try {
+        const ref = doc(db, "promedios", user.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data().subjects || [];
+          renderFromData(data);
+        } else {
+          renderFromData(null);
+        }
+      } catch (err) {
+        console.error("Error cargando desde Firestore, uso local:", err);
+        loadFromLocal();
+      }
+    }
+
+    /* ====== GUARDAR (LOCAL + FIRESTORE SI HAY USER) ====== */
+    function collectSubjectsData() {
+      const subjectsData = [];
       subjectsContainer.querySelectorAll(".subject-card").forEach(card => {
         const name = card.querySelector(".subject-header input").value;
         const evals = [];
-
         card.querySelectorAll("tbody tr").forEach(tr => {
           const inputs = tr.querySelectorAll("input");
           const grade = inputs[0].value;
           const percent = inputs[1].value;
           evals.push({ grade, percent });
         });
-
         subjectsData.push({ name, evaluations: evals });
       });
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(subjectsData));
+      return subjectsData;
     }
 
-    /* === Cargar datos === */
-    function loadFromStorage() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        createSubjectCard();
-        return;
-      }
-      try {
-        const data = JSON.parse(raw);
-        if (Array.isArray(data) && data.length) {
-          data.forEach(d => createSubjectCard(d));
-        } else {
-          createSubjectCard();
-        }
-      } catch {
-        createSubjectCard();
+    function saveData() {
+      const subjectsData = collectSubjectsData();
+      // Local
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(subjectsData));
+      // Remoto (si hay usuario)
+      if (currentUser) {
+        const ref = doc(db, "promedios", currentUser.uid);
+        setDoc(ref, { subjects: subjectsData }, { merge: true }).catch(err =>
+          console.error("Error guardando en Firestore:", err)
+        );
       }
     }
 
-    /* === Calcular promedios === */
+    /* ====== CÁLCULO DE PROMEDIOS ====== */
     function calculateAll() {
       let subjects = 0;
       let sumNormal = 0;
@@ -410,7 +498,7 @@
 
         if (totalW > 0) {
           const avg = weighted / totalW;        // promedio normal
-          const rounded = customRound(avg);     // promedio redondeado con tu regla
+          const rounded = customRound(avg);     // redondeado
 
           avgNode.innerHTML = `
             Normal: ${avg.toFixed(2)}<br>
@@ -443,7 +531,6 @@
       } else {
         const generalNormal = sumNormal / subjects;
         const generalRounded = sumRounded / subjects;
-
         globalAverageEl.innerHTML = `
           Normal: ${generalNormal.toFixed(2)}<br>
           Con redondeados: <strong>${generalRounded.toFixed(2)}</strong>
@@ -451,26 +538,65 @@
       }
     }
 
-    /* === Botones === */
-    document.getElementById("addSubjectBtn").onclick = () => {
+    /* ====== LOGIN / LOGOUT GOOGLE ====== */
+    loginBtn.addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        console.error("Error al iniciar sesión:", err);
+        alert("No se pudo iniciar sesión con Google.");
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error("Error al cerrar sesión:", err);
+      }
+    });
+
+    onAuthStateChanged(auth, async user => {
+      currentUser = user;
+      if (user) {
+        userInfoEl.textContent = `Sesión: ${user.displayName || user.email}`;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        await loadFromRemote(user);
+      } else {
+        userInfoEl.textContent = "Modo local (sin sesión)";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        loadFromLocal();
+      }
+    });
+
+    /* ====== BOTONES GENERALES ====== */
+    addSubjectBtn.addEventListener("click", () => {
       createSubjectCard();
       handleChange();
-    };
+    });
 
-    document.getElementById("recalcAllBtn").onclick = calculateAll;
+    recalcAllBtn.addEventListener("click", () => {
+      calculateAll();
+    });
 
-    document.getElementById("clearAllBtn").onclick = () => {
-      if (confirm("¿Seguro que quieres borrar todo?")) {
-        localStorage.removeItem(STORAGE_KEY);
-        subjectsContainer.innerHTML = "";
-        createSubjectCard();
-        calculateAll();
+    clearAllBtn.addEventListener("click", () => {
+      if (!confirm("¿Seguro que quieres borrar todo?")) return;
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      if (currentUser) {
+        const ref = doc(db, "promedios", currentUser.uid);
+        setDoc(ref, { subjects: [] }, { merge: true }).catch(console.error);
       }
-    };
+      subjectsContainer.innerHTML = "";
+      createSubjectCard();
+      calculateAll();
+    });
 
-    /* === Inicio === */
-    loadFromStorage();
-    calculateAll();
+    /* ====== INICIO (modo sin sesión hasta que Firebase cargue estado) ====== */
+    // onAuthStateChanged ya llama a loadFromLocal() si no hay usuario,
+    // pero por si se demora, mostramos algo funcional:
+    loadFromLocal();
   </script>
 </body>
 </html>
