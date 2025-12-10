@@ -79,11 +79,52 @@
       flex-wrap: wrap;
     }
 
-    .semesters-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-      gap: 18px;
+    .view {
+      margin-bottom: 16px;
     }
+
+    /* LISTA DE SEMESTRES */
+
+    .semester-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .semester-list-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+    }
+
+    .semester-list-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .semester-list-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .semester-list-average {
+      font-size: 0.85rem;
+      color: var(--text-soft);
+    }
+
+    .semester-list-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* DETALLE SEMESTRE */
 
     .semester-card {
       background: var(--card);
@@ -242,6 +283,13 @@
       font-weight: bold;
       color: var(--text);
     }
+
+    .empty-msg {
+      font-size: 0.9rem;
+      color: var(--text-soft);
+      text-align: center;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -256,13 +304,24 @@
       </div>
     </div>
 
-    <div class="top-bar">
-      <button class="btn-primary" id="addSemesterBtn">Agregar semestre</button>
-      <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
-      <button class="btn-danger" id="clearAllBtn">Borrar todo</button>
+    <!-- Vista lista de semestres -->
+    <div id="viewList" class="view">
+      <div class="top-bar">
+        <button class="btn-primary" id="addSemesterBtn">Agregar semestre</button>
+        <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
+        <button class="btn-danger" id="clearAllBtn">Borrar todo</button>
+      </div>
+      <div id="semesterList" class="semester-list"></div>
     </div>
 
-    <div class="semesters-container" id="semestersContainer"></div>
+    <!-- Vista detalle de un semestre -->
+    <div id="viewDetail" class="view" style="display:none;">
+      <div class="top-bar" style="justify-content:space-between;">
+        <button class="btn-secondary" id="backBtn">← Volver a semestres</button>
+        <button class="btn-danger" id="deleteSemesterDetailBtn">Eliminar semestre</button>
+      </div>
+      <div id="semesterDetail"></div>
+    </div>
 
     <div class="global-box">
       Promedio general (todas las asignaturas de todos los semestres, usando promedios redondeados):
@@ -286,7 +345,7 @@
       setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Tu config real
+    // Configuración real de tu proyecto
     const firebaseConfig = {
       apiKey: "AIzaSyAcbTdLv_uULcoIHvtrp5nfoB1Q_m-ziDc",
       authDomain: "promedios-ubb.firebaseapp.com",
@@ -301,19 +360,27 @@
     const provider = new GoogleAuthProvider();
     const db = getFirestore(appFB);
 
-    const semestersContainer = document.getElementById("semestersContainer");
+    // DOM
+    const viewList = document.getElementById("viewList");
+    const viewDetail = document.getElementById("viewDetail");
+    const semesterListEl = document.getElementById("semesterList");
+    const semesterDetailEl = document.getElementById("semesterDetail");
     const globalAverageEl = document.getElementById("globalAverage");
 
     const addSemesterBtn = document.getElementById("addSemesterBtn");
     const recalcAllBtn = document.getElementById("recalcAllBtn");
     const clearAllBtn = document.getElementById("clearAllBtn");
+    const backBtn = document.getElementById("backBtn");
+    const deleteSemesterDetailBtn = document.getElementById("deleteSemesterDetailBtn");
 
     const userInfoEl = document.getElementById("userInfo");
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    const LOCAL_STORAGE_KEY = "promedios_semestres_v1";
+    const LOCAL_STORAGE_KEY = "promedios_semestres_v2";
     let currentUser = null;
+    let semestersData = [];
+    let selectedSemesterIndex = null;
 
     // Redondeo especial: decimal >= 0.45 sube
     function customRound(value) {
@@ -321,21 +388,126 @@
       return decimal >= 0.45 ? Math.ceil(value) : Math.floor(value);
     }
 
-    function handleChange() {
-      saveData();
-      calculateAll();
+    function showListView() {
+      viewList.style.display = "block";
+      viewDetail.style.display = "none";
+      selectedSemesterIndex = selectedSemesterIndex; // no tocamos el índice por si quieres volver al mismo luego
     }
 
-    function updateNoteLabels(subjectCard) {
-      const rows = subjectCard.querySelectorAll("tbody tr");
-      rows.forEach((tr, idx) => {
-        const label = tr.querySelector(".note-label");
-        if (label) label.textContent = "Nota " + (idx + 1);
+    function showDetailView() {
+      viewList.style.display = "none";
+      viewDetail.style.display = "block";
+    }
+
+    /* --------- RENDER LISTA DE SEMESTRES --------- */
+
+    function computeSemesterAverageFromData(sem) {
+      let subjectsCount = 0;
+      let sumNormal = 0;
+      let sumRounded = 0;
+
+      (sem.subjects || []).forEach(sub => {
+        let totalW = 0;
+        let weighted = 0;
+        (sub.evaluations || []).forEach(ev => {
+          const grade = parseFloat(ev.grade);
+          const percent = parseFloat(ev.percent);
+          if (!isNaN(grade) && !isNaN(percent)) {
+            totalW += percent;
+            weighted += grade * percent;
+          }
+        });
+        if (totalW > 0) {
+          const avg = weighted / totalW;
+          const rounded = customRound(avg);
+          subjectsCount++;
+          sumNormal += avg;
+          sumRounded += rounded;
+        }
+      });
+
+      if (!subjectsCount) return null;
+
+      return {
+        normal: sumNormal / subjectsCount,
+        rounded: sumRounded / subjectsCount
+      };
+    }
+
+    function renderSemesterList() {
+      semesterListEl.innerHTML = "";
+
+      if (!semestersData.length) {
+        const p = document.createElement("p");
+        p.className = "empty-msg";
+        p.textContent = "No tienes semestres aún. Pulsa \"Agregar semestre\".";
+        semesterListEl.appendChild(p);
+        return;
+      }
+
+      semestersData.forEach((sem, index) => {
+        const card = document.createElement("div");
+        card.className = "semester-list-card";
+
+        const main = document.createElement("div");
+        main.className = "semester-list-main";
+
+        const name = document.createElement("div");
+        name.className = "semester-list-name";
+        name.textContent = sem.name || `Semestre ${index + 1}`;
+
+        const avgInfo = document.createElement("div");
+        avgInfo.className = "semester-list-average";
+
+        const avg = computeSemesterAverageFromData(sem);
+        if (avg) {
+          avgInfo.innerHTML = `
+            Normal: ${avg.normal.toFixed(2)} ·
+            Redondeado: <strong>${avg.rounded.toFixed(2)}</strong>
+          `;
+        } else {
+          avgInfo.textContent = "Sin datos aún";
+        }
+
+        main.appendChild(name);
+        main.appendChild(avgInfo);
+
+        const actions = document.createElement("div");
+        actions.className = "semester-list-actions";
+
+        const openBtn = document.createElement("button");
+        openBtn.className = "btn-primary";
+        openBtn.textContent = "Abrir";
+        openBtn.addEventListener("click", () => {
+          selectedSemesterIndex = index;
+          renderSemesterDetail();
+          showDetailView();
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn-danger";
+        delBtn.textContent = "Eliminar";
+        delBtn.addEventListener("click", () => {
+          if (!confirm("¿Eliminar este semestre?")) return;
+          semestersData.splice(index, 1);
+          saveData();
+          renderSemesterList();
+          renderGlobalAverage();
+          showListView();
+        });
+
+        actions.appendChild(openBtn);
+        actions.appendChild(delBtn);
+
+        card.appendChild(main);
+        card.appendChild(actions);
+        semesterListEl.appendChild(card);
       });
     }
 
-    // Crear tarjeta de asignatura
-    function createSubjectCard(subjectsContainerEl, subjectData = {}) {
+    /* --------- DETALLE DE UN SEMESTRE --------- */
+
+    function createSubjectCardDOM(parent, subjectData = {}) {
       const subjectCard = document.createElement("div");
       subjectCard.className = "subject-card";
 
@@ -346,7 +518,7 @@
       nameInput.type = "text";
       nameInput.placeholder = "Nombre asignatura";
       nameInput.value = subjectData.name || "";
-      nameInput.addEventListener("input", handleChange);
+      nameInput.addEventListener("input", syncDetailToData);
 
       const deleteSubjectBtn = document.createElement("button");
       deleteSubjectBtn.textContent = "Eliminar ramo";
@@ -354,7 +526,7 @@
       deleteSubjectBtn.style.fontSize = "0.7rem";
       deleteSubjectBtn.addEventListener("click", () => {
         subjectCard.remove();
-        handleChange();
+        syncDetailToData();
       });
 
       header.appendChild(nameInput);
@@ -371,7 +543,7 @@
       const tbody = document.createElement("tbody");
       table.appendChild(tbody);
 
-      function addEval(row = {}) {
+      function addEvalRow(rowData = {}) {
         const tr = document.createElement("tr");
 
         const tdLabel = document.createElement("td");
@@ -384,8 +556,8 @@
         gradeInput.max = "7";
         gradeInput.step = "0.1";
         gradeInput.placeholder = "Nota";
-        gradeInput.value = row.grade || "";
-        gradeInput.addEventListener("input", handleChange);
+        gradeInput.value = rowData.grade || "";
+        gradeInput.addEventListener("input", syncDetailToData);
         tdGrade.appendChild(gradeInput);
 
         const tdPercent = document.createElement("td");
@@ -396,8 +568,8 @@
         percentInput.min = "0";
         percentInput.step = "0.1";
         percentInput.placeholder = "%";
-        percentInput.value = row.percent || "";
-        percentInput.addEventListener("input", handleChange);
+        percentInput.value = rowData.percent || "";
+        percentInput.addEventListener("input", syncDetailToData);
         const percentSpan = document.createElement("span");
         percentSpan.textContent = "%";
         pWrap.appendChild(percentInput);
@@ -413,7 +585,7 @@
         delEvalBtn.addEventListener("click", () => {
           tr.remove();
           updateNoteLabels(subjectCard);
-          handleChange();
+          syncDetailToData();
         });
         tdActions.appendChild(delEvalBtn);
 
@@ -427,9 +599,9 @@
       }
 
       if (subjectData.evaluations && subjectData.evaluations.length) {
-        subjectData.evaluations.forEach(ev => addEval(ev));
+        subjectData.evaluations.forEach(ev => addEvalRow(ev));
       } else {
-        addEval();
+        addEvalRow();
       }
 
       const addEvalBtn = document.createElement("button");
@@ -437,8 +609,8 @@
       addEvalBtn.className = "btn-secondary";
       addEvalBtn.style.fontSize = "0.75rem";
       addEvalBtn.addEventListener("click", () => {
-        addEval();
-        handleChange();
+        addEvalRow();
+        syncDetailToData();
       });
 
       const footer = document.createElement("div");
@@ -455,14 +627,26 @@
       subjectCard.appendChild(addEvalBtn);
       subjectCard.appendChild(footer);
 
-      subjectsContainerEl.appendChild(subjectCard);
+      parent.appendChild(subjectCard);
       updateNoteLabels(subjectCard);
     }
 
-    // Crear tarjeta de semestre
-    function createSemesterCard(semData = {}) {
-      const semesterCard = document.createElement("div");
-      semesterCard.className = "semester-card";
+    function updateNoteLabels(subjectCard) {
+      const rows = subjectCard.querySelectorAll("tbody tr");
+      rows.forEach((tr, idx) => {
+        const label = tr.querySelector(".note-label");
+        if (label) label.textContent = "Nota " + (idx + 1);
+      });
+    }
+
+    function renderSemesterDetail() {
+      semesterDetailEl.innerHTML = "";
+
+      const sem = semestersData[selectedSemesterIndex];
+      if (!sem) return;
+
+      const semCard = document.createElement("div");
+      semCard.className = "semester-card";
 
       const header = document.createElement("div");
       header.className = "semester-header";
@@ -470,28 +654,17 @@
       const nameInput = document.createElement("input");
       nameInput.type = "text";
       nameInput.placeholder = "Nombre semestre (Ej: 2025-1)";
-      nameInput.value = semData.name || "";
-      nameInput.addEventListener("input", handleChange);
-
-      const delSemBtn = document.createElement("button");
-      delSemBtn.textContent = "Eliminar semestre";
-      delSemBtn.className = "btn-danger";
-      delSemBtn.style.fontSize = "0.75rem";
-      delSemBtn.addEventListener("click", () => {
-        semesterCard.remove();
-        handleChange();
-      });
+      nameInput.value = sem.name || "";
+      nameInput.addEventListener("input", syncDetailToData);
 
       header.appendChild(nameInput);
-      header.appendChild(delSemBtn);
 
       const subjectsWrapper = document.createElement("div");
       subjectsWrapper.className = "semester-subjects";
 
-      if (semData.subjects && semData.subjects.length) {
-        semData.subjects.forEach(sub => createSubjectCard(subjectsWrapper, sub));
-      } else {
-        createSubjectCard(subjectsWrapper);
+      (sem.subjects || []).forEach(sub => createSubjectCardDOM(subjectsWrapper, sub));
+      if (!sem.subjects || !sem.subjects.length) {
+        createSubjectCardDOM(subjectsWrapper);
       }
 
       const addSubjectBtn = document.createElement("button");
@@ -499,8 +672,8 @@
       addSubjectBtn.className = "btn-primary";
       addSubjectBtn.style.fontSize = "0.8rem";
       addSubjectBtn.addEventListener("click", () => {
-        createSubjectCard(subjectsWrapper);
-        handleChange();
+        createSubjectCardDOM(subjectsWrapper);
+        syncDetailToData();
       });
 
       const semFooter = document.createElement("div");
@@ -510,36 +683,180 @@
         <span class="semester-average">-</span>
       `;
 
-      semesterCard.appendChild(header);
-      semesterCard.appendChild(subjectsWrapper);
-      semesterCard.appendChild(addSubjectBtn);
-      semesterCard.appendChild(semFooter);
+      semCard.appendChild(header);
+      semCard.appendChild(subjectsWrapper);
+      semCard.appendChild(addSubjectBtn);
+      semCard.appendChild(semFooter);
 
-      semestersContainer.appendChild(semesterCard);
+      semesterDetailEl.appendChild(semCard);
+
+      // recalcular promedios basados en los datos actuales
+      syncDetailToData();
     }
 
-    function renderFromData(semestersData) {
-      semestersContainer.innerHTML = "";
-      if (Array.isArray(semestersData) && semestersData.length) {
-        semestersData.forEach(sem => createSemesterCard(sem));
+    /* --------- SYNC DETALLE → DATA + PROMEDIOS --------- */
+
+    function syncDetailToData() {
+      if (selectedSemesterIndex === null) return;
+      const semCard = semesterDetailEl.querySelector(".semester-card");
+      if (!semCard) return;
+
+      const semName = semCard.querySelector(".semester-header input").value;
+      const subjectsData = [];
+
+      let semSubjectCount = 0;
+      let semSumNormal = 0;
+      let semSumRounded = 0;
+
+      semCard.querySelectorAll(".subject-card").forEach(subCard => {
+        const subName = subCard.querySelector(".subject-header input").value;
+        const evals = [];
+
+        let totalW = 0;
+        let weighted = 0;
+
+        subCard.querySelectorAll("tbody tr").forEach(tr => {
+          const inputs = tr.querySelectorAll("input");
+          const gradeStr = inputs[0].value;
+          const percentStr = inputs[1].value;
+
+          const grade = parseFloat(gradeStr);
+          const percent = parseFloat(percentStr);
+
+          evals.push({ grade: gradeStr, percent: percentStr });
+
+          if (!isNaN(grade) && !isNaN(percent)) {
+            totalW += percent;
+            weighted += grade * percent;
+          }
+        });
+
+        const avgNode = subCard.querySelector(".subject-average");
+        const wNode = subCard.querySelector(".subject-weight");
+        const tagNode = subCard.querySelector(".subject-tag");
+
+        if (totalW > 0) {
+          const avg = weighted / totalW;
+          const rounded = customRound(avg);
+
+          avgNode.innerHTML = `
+            Normal: ${avg.toFixed(2)}<br>
+            Redondeado: <strong>${rounded}</strong>
+          `;
+          wNode.textContent = totalW.toFixed(1) + "%";
+
+          if (Math.abs(totalW - 100) < 1) {
+            tagNode.textContent = "OK";
+            tagNode.className = "subject-tag tag tag-ok";
+          } else {
+            tagNode.textContent = "No suma 100%";
+            tagNode.className = "subject-tag tag tag-bad";
+          }
+
+          semSubjectCount++;
+          semSumNormal += avg;
+          semSumRounded += rounded;
+        } else {
+          avgNode.textContent = "-";
+          wNode.textContent = "0%";
+          tagNode.textContent = "";
+          tagNode.className = "subject-tag tag";
+        }
+
+        subjectsData.push({ name: subName, evaluations: evals });
+      });
+
+      const semAvgSpan = semCard.querySelector(".semester-average");
+      if (semSubjectCount > 0) {
+        const semNormal = semSumNormal / semSubjectCount;
+        const semRounded = semSumRounded / semSubjectCount;
+        semAvgSpan.innerHTML = `
+          Normal: ${semNormal.toFixed(2)}<br>
+          Con redondeados: <strong>${semRounded.toFixed(2)}</strong>
+        `;
       } else {
-        createSemesterCard();
+        semAvgSpan.textContent = "-";
       }
-      calculateAll();
+
+      semestersData[selectedSemesterIndex] = { name: semName, subjects: subjectsData };
+
+      saveData();
+      renderSemesterList();
+      renderGlobalAverage();
+    }
+
+    /* --------- GLOBAL AVERAGE --------- */
+
+    function renderGlobalAverage() {
+      let totalSubjects = 0;
+      let sumNormal = 0;
+      let sumRounded = 0;
+
+      semestersData.forEach(sem => {
+        (sem.subjects || []).forEach(sub => {
+          let totalW = 0;
+          let weighted = 0;
+
+          (sub.evaluations || []).forEach(ev => {
+            const grade = parseFloat(ev.grade);
+            const percent = parseFloat(ev.percent);
+            if (!isNaN(grade) && !isNaN(percent)) {
+              totalW += percent;
+              weighted += grade * percent;
+            }
+          });
+
+          if (totalW > 0) {
+            const avg = weighted / totalW;
+            const rounded = customRound(avg);
+            totalSubjects++;
+            sumNormal += avg;
+            sumRounded += rounded;
+          }
+        });
+      });
+
+      if (!totalSubjects) {
+        globalAverageEl.textContent = "-";
+      } else {
+        const normal = sumNormal / totalSubjects;
+        const rounded = sumRounded / totalSubjects;
+        globalAverageEl.innerHTML = `
+          Normal: ${normal.toFixed(2)}<br>
+          Con redondeados: <strong>${rounded.toFixed(2)}</strong>
+        `;
+      }
+    }
+
+    /* --------- STORAGE / FIRESTORE --------- */
+
+    function saveData() {
+      const data = semestersData;
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+
+      if (currentUser) {
+        const ref = doc(db, "promedios_semestres", currentUser.uid);
+        setDoc(ref, { semesters: data }, { merge: true }).catch(err =>
+          console.error("Error guardando en Firestore:", err)
+        );
+      }
     }
 
     function loadFromLocal() {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (!raw) {
-        renderFromData(null);
+        semestersData = [];
+        renderSemesterList();
+        renderGlobalAverage();
         return;
       }
       try {
-        const data = JSON.parse(raw);
-        renderFromData(data);
+        semestersData = JSON.parse(raw) || [];
       } catch {
-        renderFromData(null);
+        semestersData = [];
       }
+      renderSemesterList();
+      renderGlobalAverage();
     }
 
     async function loadFromRemote(user) {
@@ -547,138 +864,21 @@
         const ref = doc(db, "promedios_semestres", user.uid);
         const snap = await getDoc(ref);
         if (snap.exists()) {
-          const data = snap.data().semesters || [];
-          renderFromData(data);
+          semestersData = snap.data().semesters || [];
         } else {
-          renderFromData(null);
+          semestersData = [];
         }
       } catch (err) {
         console.error("Error cargando desde Firestore, uso local:", err);
         loadFromLocal();
+        return;
       }
+      renderSemesterList();
+      renderGlobalAverage();
     }
 
-    function collectData() {
-      const semestersData = [];
-      semestersContainer.querySelectorAll(".semester-card").forEach(semCard => {
-        const semName = semCard.querySelector(".semester-header input").value;
-        const subjectsData = [];
-        semCard.querySelectorAll(".subject-card").forEach(subCard => {
-          const subName = subCard.querySelector(".subject-header input").value;
-          const evals = [];
-          subCard.querySelectorAll("tbody tr").forEach(tr => {
-            const inputs = tr.querySelectorAll("input");
-            const grade = inputs[0].value;
-            const percent = inputs[1].value;
-            evals.push({ grade, percent });
-          });
-          subjectsData.push({ name: subName, evaluations: evals });
-        });
-        semestersData.push({ name: semName, subjects: subjectsData });
-      });
-      return semestersData;
-    }
+    /* --------- AUTH GOOGLE --------- */
 
-    function saveData() {
-      const semestersData = collectData();
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(semestersData));
-      if (currentUser) {
-        const ref = doc(db, "promedios_semestres", currentUser.uid);
-        setDoc(ref, { semesters: semestersData }, { merge: true }).catch(err =>
-          console.error("Error guardando en Firestore:", err)
-        );
-      }
-    }
-
-    function calculateAll() {
-      let totalSubjectsAll = 0;
-      let sumNormalAll = 0;
-      let sumRoundedAll = 0;
-
-      semestersContainer.querySelectorAll(".semester-card").forEach(semCard => {
-        let semSubjectCount = 0;
-        let semSumNormal = 0;
-        let semSumRounded = 0;
-
-        semCard.querySelectorAll(".subject-card").forEach(subCard => {
-          const rows = subCard.querySelectorAll("tbody tr");
-          let totalW = 0;
-          let weighted = 0;
-
-          rows.forEach(tr => {
-            const inputs = tr.querySelectorAll("input");
-            const grade = parseFloat(inputs[0].value);
-            const percent = parseFloat(inputs[1].value);
-            if (!isNaN(grade) && !isNaN(percent)) {
-              totalW += percent;
-              weighted += grade * percent;
-            }
-          });
-
-          const avgNode = subCard.querySelector(".subject-average");
-          const wNode = subCard.querySelector(".subject-weight");
-          const tagNode = subCard.querySelector(".subject-tag");
-
-          if (totalW > 0) {
-            const avg = weighted / totalW;
-            const rounded = customRound(avg);
-
-            avgNode.innerHTML = `
-              Normal: ${avg.toFixed(2)}<br>
-              Redondeado: <strong>${rounded}</strong>
-            `;
-
-            wNode.textContent = totalW.toFixed(1) + "%";
-
-            if (Math.abs(totalW - 100) < 1) {
-              tagNode.textContent = "OK";
-              tagNode.className = "subject-tag tag tag-ok";
-            } else {
-              tagNode.textContent = "No suma 100%";
-              tagNode.className = "subject-tag tag tag-bad";
-            }
-
-            semSubjectCount++;
-            semSumNormal += avg;
-            semSumRounded += rounded;
-
-            totalSubjectsAll++;
-            sumNormalAll += avg;
-            sumRoundedAll += rounded;
-          } else {
-            avgNode.textContent = "-";
-            wNode.textContent = "0%";
-            tagNode.textContent = "";
-            tagNode.className = "subject-tag tag";
-          }
-        });
-
-        const semAvgNode = semCard.querySelector(".semester-average");
-        if (semSubjectCount > 0) {
-          const semAvgNormal = semSumNormal / semSubjectCount;
-          const semAvgRounded = semSumRounded / semSubjectCount;
-          semAvgNode.innerHTML = `
-            Normal: ${semAvgNormal.toFixed(2)}<br>
-            Con redondeados: <strong>${semAvgRounded.toFixed(2)}</strong>
-          `;
-        } else {
-          semAvgNode.textContent = "-";
-        }
-      });
-
-      if (totalSubjectsAll === 0) {
-        globalAverageEl.textContent = "-";
-      } else {
-        const generalNormal = sumNormalAll / totalSubjectsAll;
-        const generalRounded = sumRoundedAll / totalSubjectsAll;
-        globalAverageEl.innerHTML = `
-          Normal: ${generalNormal.toFixed(2)}<br>
-          Con redondeados: <strong>${generalRounded.toFixed(2)}</strong>
-        `;
-      }
-    }
-
-    // Auth Google
     loginBtn.addEventListener("click", async () => {
       try {
         await signInWithPopup(auth, provider);
@@ -711,29 +911,64 @@
       }
     });
 
-    // Botones generales
+    /* --------- BOTONES GENERALES --------- */
+
     addSemesterBtn.addEventListener("click", () => {
-      createSemesterCard();
-      handleChange();
+      semestersData.push({
+        name: "",
+        subjects: [
+          {
+            name: "",
+            evaluations: [{ grade: "", percent: "" }]
+          }
+        ]
+      });
+      saveData();
+      renderSemesterList();
+      renderGlobalAverage();
     });
 
     recalcAllBtn.addEventListener("click", () => {
-      calculateAll();
+      // Recalcular sólo desde datos
+      renderSemesterList();
+      renderGlobalAverage();
+      if (viewDetail.style.display === "block") {
+        renderSemesterDetail();
+      }
     });
 
     clearAllBtn.addEventListener("click", () => {
       if (!confirm("¿Seguro que quieres borrar todo?")) return;
+      semestersData = [];
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       if (currentUser) {
         const ref = doc(db, "promedios_semestres", currentUser.uid);
         setDoc(ref, { semesters: [] }, { merge: true }).catch(console.error);
       }
-      semestersContainer.innerHTML = "";
-      createSemesterCard();
-      calculateAll();
+      renderSemesterList();
+      renderGlobalAverage();
+      showListView();
     });
 
-    // Inicio: algo local mientras se resuelve el estado de auth
+    backBtn.addEventListener("click", () => {
+      // Antes de salir, sincronizamos por si algo cambió
+      syncDetailToData();
+      showListView();
+    });
+
+    deleteSemesterDetailBtn.addEventListener("click", () => {
+      if (selectedSemesterIndex === null) return;
+      if (!confirm("¿Eliminar este semestre?")) return;
+      semestersData.splice(selectedSemesterIndex, 1);
+      saveData();
+      renderSemesterList();
+      renderGlobalAverage();
+      showListView();
+    });
+
+    /* --------- INICIO --------- */
+
+    // Por si el estado de auth se demora, mostramos algo local de inmediato
     loadFromLocal();
   </script>
 </body>
