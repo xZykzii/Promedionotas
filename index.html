@@ -1,702 +1,326 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Promedios</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promedios UBB</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f0f0f">
+    <!-- MANIFEST → rutas absolutas para subcarpeta -->
+    <link rel="manifest" href="/Promedionotas/manifest.json">
 
-  <style>
-    :root {
-      --bg: #0f0f0f;
-      --card: #1a1a1a;
-      --card-soft: #181818;
-      --text: #e5e5e5;
-      --text-soft: #bbbbbb;
-      --input-bg: #262626;
-      --input-border: #3d3d3d;
-      --accent: #2563eb;
-      --danger: #ef4444;
-      --tag-ok-bg: #14532d;
-      --tag-ok-text: #bbf7d0;
-      --tag-bad-bg: #450a0a;
-      --tag-bad-text: #fecaca;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+    <!-- Favicon -->
+    <link rel="icon" href="/Promedionotas/icons/icon-192.png">
 
-    body {
-      margin: 0;
-      padding: 16px;
-      background: var(--bg);
-      color: var(--text);
-    }
+    <!-- SERVICE WORKER -->
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("/Promedionotas/sw.js");
+            });
+        }
+    </script>
 
-    .app {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+    <style>
+        body {
+            background: #0d0d0d;
+            color: #ffffff;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
 
-    h1 {
-      margin-top: 0;
-      font-size: 1.6rem;
-      text-align: center;
-      color: var(--text);
-    }
+        header {
+            padding: 20px;
+            text-align: center;
+            font-size: 26px;
+            background: #111;
+            border-bottom: 2px solid #444;
+        }
 
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px;
+            background: #111;
+        }
 
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-secondary { background: #333; color: var(--text); }
-    .btn-danger { background: var(--danger); color: white; }
+        nav button {
+            padding: 10px 16px;
+            background: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
 
-    .auth-bar {
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      font-size: 0.85rem;
-      color: var(--text-soft);
-    }
+        nav button:hover {
+            background: #1976d2;
+        }
 
-    .auth-right {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+        .page {
+            display: none;
+            padding: 20px;
+        }
 
-    .top-bar {
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+        .active {
+            display: block;
+        }
 
-    .view { margin-bottom: 16px; }
+        .asignatura-box {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            width: 90%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
 
-    /* LISTA DE SEMESTRES */
-    .semester-list { display: flex; flex-direction: column; gap: 10px; }
+        .eval-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
 
-    .semester-list-card {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-    }
+        input {
+            width: 80px;
+            padding: 6px;
+            border-radius: 5px;
+            border: none;
+            background: #2a2a2a;
+            color: #fff;
+        }
 
-    .semester-list-name { font-size: 1rem; font-weight: 600; color: var(--text); }
-    .semester-list-average { font-size: 0.85rem; color: var(--text-soft); }
-    .semester-list-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn {
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
 
-    /* DETALLE DE SEMESTRE */
-    .semester-card {
-      background: var(--card);
-      border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+        .btn-add {
+            background: #43a047;
+            color: white;
+        }
 
-    .semester-header { display: flex; align-items: center; gap: 8px; }
+        .btn-del {
+            background: #e53935;
+            color: white;
+        }
 
-    input[type="text"], input[type="number"] {
-      width: 100%;
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid var(--input-border);
-      background: var(--input-bg);
-      color: var(--text);
-      font-size: 0.9rem;
-      box-sizing: border-box;
-    }
+        .btn-blue {
+            background: #1e88e5;
+            color: white;
+        }
 
-    input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent);
-    }
+        .title {
+            font-size: 20px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
 
-    .semester-subjects { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
-
-    .subject-card {
-      background: var(--card-soft);
-      border-radius: 12px;
-      padding: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    th, td { border-bottom: 1px solid #2a2a2a; padding: 3px; text-align: left; color: var(--text); }
-    .note-label { font-weight: 600; white-space: nowrap; }
-
-    .percent-wrapper { display: flex; align-items: center; gap: 4px; }
-    .percent-wrapper span { padding: 3px 6px; background: #333; border-radius: 4px; font-size: 0.75rem; color: var(--text-soft); }
-
-    .subject-footer { font-size: 0.8rem; color: var(--text-soft); }
-    .subject-average { font-weight: bold; font-size: 0.85rem; }
-
-    .semester-footer { margin-top: 6px; padding-top: 6px; border-top: 1px solid #272727; font-size: 0.9rem; color: var(--text-soft); }
-    .semester-average { font-weight: bold; font-size: 0.95rem; }
-
-    .tag { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 0.7rem; margin-left: 5px; }
-    .tag-ok { background: var(--tag-ok-bg); color: var(--tag-ok-text); }
-    .tag-bad { background: var(--tag-bad-bg); color: var(--tag-bad-text); }
-
-    .global-box {
-      margin-top: 20px;
-      padding: 14px;
-      border-radius: 12px;
-      background: #111827;
-      border: 1px solid #1e293b;
-      font-size: 0.95rem;
-    }
-    .global-main { font-size: 1.4rem; font-weight: bold; color: var(--text); }
-
-    .empty-msg { font-size: 0.9rem; color: var(--text-soft); text-align: center; margin-top: 10px; }
-  </style>
+        .result {
+            margin-top: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+    </style>
 </head>
+
 <body>
-  <div class="app">
-    <h1>Promedios</h1>
 
-    <div class="auth-bar">
-      <div id="userInfo">Modo local (sin sesión)</div>
-      <div class="auth-right">
-        <button class="btn-primary" id="loginBtn">Iniciar sesión con Google</button>
-        <button class="btn-secondary" id="logoutBtn" style="display:none;">Cerrar sesión</button>
-      </div>
-    </div>
+<header>Promedios UBB</header>
 
-    <!-- LISTA -->
-    <div id="viewList" class="view">
-      <div class="top-bar">
-        <button class="btn-primary" id="addSemesterBtn">Agregar semestre</button>
-        <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
-        <button class="btn-danger" id="clearAllBtn">Borrar todo</button>
-      </div>
-      <div id="semesterList" class="semester-list"></div>
-    </div>
+<nav>
+    <button onclick="showPage('semestres')">Semestres</button>
+    <button onclick="showPage('inicio')">Inicio</button>
+</nav>
 
-    <!-- DETALLE -->
-    <div id="viewDetail" class="view" style="display:none;">
-      <div class="top-bar" style="justify-content:space-between;">
-        <button class="btn-secondary" id="backBtn">← Volver</button>
-        <button class="btn-danger" id="deleteSemesterDetailBtn">Eliminar semestre</button>
-      </div>
-      <div id="semesterDetail"></div>
-    </div>
+<!-- ===================== PÁGINA PRINCIPAL ===================== -->
+<div id="inicio" class="page active">
+    <h2 style="text-align:center;">Promedio general</h2>
+    <p id="promedioGeneral" style="text-align:center; font-size:22px;">–</p>
+</div>
 
-    <div class="global-box">
-      Promedio general (usando redondeados):
-      <div class="global-main" id="globalAverage">-</div>
-    </div>
-  </div>
+<!-- ===================== PÁGINA DE SEMESTRES ===================== -->
+<div id="semestres" class="page">
 
-  <!-- SCRIPT PRINCIPAL -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    <button class="btn btn-add" onclick="agregarSemestre()">+ Agregar semestre</button>
+    <div id="contenedorSemestres"></div>
 
-    /* CONFIG REAL */
-    const firebaseConfig = {
-      apiKey: "AIzaSyAcbTdLv_uULcoIHvtrp5nfoB1Q_m-ziDc",
-      authDomain: "promedios-ubb.firebaseapp.com",
-      projectId: "promedios-ubb",
-      storageBucket: "promedios-ubb.firebasestorage.app",
-      messagingSenderId: "170154498162",
-      appId: "1:170154498162:web:d79694baf51cc25382caeb"
-    };
+</div>
 
-    const appFB = initializeApp(firebaseConfig);
-    const auth = getAuth(appFB);
-    const provider = new GoogleAuthProvider();
-    const db = getFirestore(appFB);
+<script>
+/* ============================
+   CAMBIO DE PÁGINAS
+============================ */
+function showPage(id) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+}
 
-    const viewList = document.getElementById("viewList");
-    const viewDetail = document.getElementById("viewDetail");
-    const semesterListEl = document.getElementById("semesterList");
-    const semesterDetailEl = document.getElementById("semesterDetail");
-    const globalAverageEl = document.getElementById("globalAverage");
+/* ======================================================
+   SISTEMA DE SEMESTRES → cada semestre tiene asignaturas
+====================================================== */
+let semestres = JSON.parse(localStorage.getItem("semestresUBB") || "[]");
 
-    const addSemesterBtn = document.getElementById("addSemesterBtn");
-    const recalcAllBtn = document.getElementById("recalcAllBtn");
-    const clearAllBtn = document.getElementById("clearAllBtn");
-    const backBtn = document.getElementById("backBtn");
-    const deleteSemesterDetailBtn = document.getElementById("deleteSemesterDetailBtn");
+function guardar() {
+    localStorage.setItem("semestresUBB", JSON.stringify(semestres));
+    actualizarGeneral();
+}
 
-    const userInfoEl = document.getElementById("userInfo");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
+function agregarSemestre() {
+    semestres.push({ asignaturas: [] });
+    guardar();
+    render();
+}
 
-    const LOCAL_STORAGE_KEY = "promedios_semestres_v2";
-    let currentUser = null;
-    let semestersData = [];
-    let selectedSemesterIndex = null;
+function agregarAsignatura(idxSem) {
+    semestres[idxSem].asignaturas.push({
+        evaluaciones: []
+    });
+    guardar();
+    render();
+}
 
-    function customRound(v) {
-      const d = v - Math.floor(v);
-      return d >= 0.45 ? Math.ceil(v) : Math.floor(v);
-    }
+function agregarEvaluacion(idxSem, idxAsig) {
+    semestres[idxSem].asignaturas[idxAsig].evaluaciones.push({
+        nota: "",
+        porcentaje: ""
+    });
+    guardar();
+    render();
+}
 
-    function showListView() {
-      viewList.style.display = "block";
-      viewDetail.style.display = "none";
-    }
+function eliminarSemestre(i) {
+    semestres.splice(i, 1);
+    guardar();
+    render();
+}
 
-    function showDetailView() {
-      viewList.style.display = "none";
-      viewDetail.style.display = "block";
-    }
+function eliminarAsignatura(i, j) {
+    semestres[i].asignaturas.splice(j, 1);
+    guardar();
+    render();
+}
 
-    function computeSemesterAverage(sem) {
-      let c = 0, sN = 0, sR = 0;
-      for (const sub of sem.subjects || []) {
-        let tot = 0, w = 0;
-        for (const ev of sub.evaluations || []) {
-          const g = parseFloat(ev.grade);
-          const p = parseFloat(ev.percent);
-          if (!isNaN(g) && !isNaN(p)) { tot += p; w += g * p; }
+function eliminarEvaluacion(i, j, k) {
+    semestres[i].asignaturas[j].evaluaciones.splice(k, 1);
+    guardar();
+    render();
+}
+
+/* ===============================
+   CÁLCULO DE PROMEDIOS
+=============================== */
+function calcularPromedioAsignatura(asig) {
+    let sum = 0;
+    let sumP = 0;
+
+    for (let ev of asig.evaluaciones) {
+        let n = parseFloat(ev.nota);
+        let p = parseFloat(ev.porcentaje);
+
+        if (!isNaN(n) && !isNaN(p)) {
+            sum += n * (p / 100);
+            sumP += p;
         }
-        if (tot > 0) {
-          const avg = w / tot;
-          c++; sN += avg; sR += customRound(avg);
-        }
-      }
-      if (!c) return null;
-      return { normal: sN / c, rounded: sR / c };
     }
 
-    function renderSemesterList() {
-      semesterListEl.innerHTML = "";
-      if (!semestersData.length) {
-        semesterListEl.innerHTML =
-          `<p class="empty-msg">No hay semestres. Agrega uno.</p>`;
+    if (sumP === 0) return { normal: 0, redondeado: 0 };
+
+    let normal = sum;
+    let r = Math.round(sum);
+
+    return { normal, redondeado: r };
+}
+
+function actualizarGeneral() {
+    let proms = [];
+
+    for (let sem of semestres) {
+        for (let asig of sem.asignaturas) {
+            let p = calcularPromedioAsignatura(asig);
+            proms.push(p.redondeado);
+        }
+    }
+
+    if (proms.length === 0) {
+        document.getElementById("promedioGeneral").innerText = "–";
         return;
-      }
-
-      semestersData.forEach((sem, idx) => {
-        const card = document.createElement("div");
-        card.className = "semester-list-card";
-
-        const name = document.createElement("div");
-        name.className = "semester-list-name";
-        name.textContent = sem.name || `Semestre ${idx + 1}`;
-
-        const avgInfo = document.createElement("div");
-        avgInfo.className = "semester-list-average";
-
-        const avg = computeSemesterAverage(sem);
-        if (avg)
-          avgInfo.innerHTML = `Normal: ${avg.normal.toFixed(2)} · Redondeado: <strong>${avg.rounded.toFixed(2)}</strong>`;
-        else
-          avgInfo.textContent = "Sin datos";
-
-        const actions = document.createElement("div");
-        actions.className = "semester-list-actions";
-
-        const open = document.createElement("button");
-        open.className = "btn-primary";
-        open.textContent = "Abrir";
-        open.onclick = () => {
-          selectedSemesterIndex = idx;
-          renderSemesterDetail();
-          showDetailView();
-        };
-
-        const del = document.createElement("button");
-        del.className = "btn-danger";
-        del.textContent = "Eliminar";
-        del.onclick = () => {
-          if (!confirm("¿Eliminar semestre?")) return;
-          semestersData.splice(idx, 1);
-          saveData();
-          renderSemesterList();
-          renderGlobalAverage();
-        };
-
-        actions.append(open, del);
-        const main = document.createElement("div");
-        main.append(name, avgInfo);
-
-        card.append(main, actions);
-        semesterListEl.append(card);
-      });
     }
 
-    function updateNoteLabels(card) {
-      card.querySelectorAll("tbody tr").forEach((tr, i) => {
-        tr.querySelector(".note-label").textContent = "Nota " + (i + 1);
-      });
-    }
+    let general = proms.reduce((a, b) => a + b) / proms.length;
+    document.getElementById("promedioGeneral").innerText = general.toFixed(2);
+}
 
-    function createSubjectCardDOM(parent, data = {}) {
-      const card = document.createElement("div");
-      card.className = "subject-card";
+/* ===============================
+   RENDERIZADO DE SEMESTRES
+=============================== */
+function render() {
+    let cont = document.getElementById("contenedorSemestres");
+    cont.innerHTML = "";
 
-      const header = document.createElement("div");
-      header.className = "subject-header";
+    semestres.forEach((sem, i) => {
+        let div = document.createElement("div");
+        div.className = "asignatura-box";
 
-      const name = document.createElement("input");
-      name.placeholder = "Nombre asignatura";
-      name.value = data.name || "";
-      name.oninput = syncDetailToData;
+        let html = `
+            <div style="display:flex; justify-content:space-between;">
+                <div class="title">Semestre ${i + 1}</div>
+                <button class="btn btn-del" onclick="eliminarSemestre(${i})">X</button>
+            </div>
+        `;
 
-      const del = document.createElement("button");
-      del.className = "btn-danger";
-      del.style.fontSize = "0.7rem";
-      del.textContent = "Eliminar ramo";
-      del.onclick = () => {
-        card.remove();
-        syncDetailToData();
-      };
+        sem.asignaturas.forEach((asig, j) => {
+            let prom = calcularPromedioAsignatura(asig);
 
-      header.append(name, del);
+            html += `
+                <div class="asignatura-box" style="background:#222; margin-top:10px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <div class="title">Asignatura ${j + 1}</div>
+                        <button class="btn btn-del" onclick="eliminarAsignatura(${i},${j})">X</button>
+                    </div>
 
-      const table = document.createElement("table");
-      table.innerHTML = `
-        <thead><tr><th></th><th>Nota</th><th>%</th><th></th></tr></thead>
-      `;
-      const tbody = document.createElement("tbody");
-      table.append(tbody);
+                    <div class="result">
+                        Normal: ${prom.normal.toFixed(2)}<br>
+                        Redondeado: ${prom.redondeado}
+                    </div>
+            `;
 
-      function addEval(row = {}) {
-        const tr = document.createElement("tr");
+            asig.evaluaciones.forEach((ev, k) => {
+                html += `
+                    <div class="eval-row">
+                        <div>Nota ${k + 1}</div>
+                        <input type="number" value="${ev.nota}" placeholder="Nota" onchange="ev.nota=this.value; guardar();">
+                        <input type="number" value="${ev.porcentaje}" placeholder="%" onchange="ev.porcentaje=this.value; guardar();">
+                        <button class="btn btn-del" onclick="eliminarEvaluacion(${i},${j},${k})">X</button>
+                    </div>
+                `;
+            });
 
-        const tdL = document.createElement("td");
-        tdL.className = "note-label";
-
-        const tdG = document.createElement("td");
-        const g = document.createElement("input");
-        g.type = "number"; g.step = "0.1"; g.min = "1"; g.max = "7";
-        g.placeholder = "Nota"; g.value = row.grade || "";
-        g.oninput = syncDetailToData;
-        tdG.append(g);
-
-        const tdP = document.createElement("td");
-        const wrap = document.createElement("div");
-        wrap.className = "percent-wrapper";
-        const p = document.createElement("input");
-        p.type = "number"; p.step = "0.1"; p.placeholder = "%";
-        p.value = row.percent || "";
-        p.oninput = syncDetailToData;
-
-        const pr = document.createElement("span");
-        pr.textContent = "%";
-        wrap.append(p, pr);
-        tdP.append(wrap);
-
-        const tdA = document.createElement("td");
-        const b = document.createElement("button");
-        b.className = "btn-danger";
-        b.style.fontSize = "0.7rem";
-        b.textContent = "X";
-        b.onclick = () => {
-          tr.remove();
-          updateNoteLabels(card);
-          syncDetailToData();
-        };
-        tdA.append(b);
-
-        tr.append(tdL, tdG, tdP, tdA);
-        tbody.append(tr);
-        updateNoteLabels(card);
-      }
-
-      if (data.evaluations?.length)
-        data.evaluations.forEach(e => addEval(e));
-      else
-        addEval();
-
-      const addBtn = document.createElement("button");
-      addBtn.className = "btn-secondary";
-      addBtn.style.fontSize = "0.75rem";
-      addBtn.textContent = "Agregar nota";
-      addBtn.onclick = () => { addEval(); syncDetailToData(); };
-
-      const footer = document.createElement("div");
-      footer.className = "subject-footer";
-      footer.innerHTML = `
-        Promedio asignatura:
-        <span class="subject-average">-</span><br>
-        Suma %: <strong class="subject-weight">0%</strong>
-        <span class="subject-tag tag"></span>
-      `;
-
-      card.append(header, table, addBtn, footer);
-      parent.append(card);
-    }
-
-    function renderSemesterDetail() {
-      semesterDetailEl.innerHTML = "";
-      const sem = semestersData[selectedSemesterIndex];
-      if (!sem) return;
-
-      const card = document.createElement("div");
-      card.className = "semester-card";
-
-      const header = document.createElement("div");
-      header.className = "semester-header";
-
-      const name = document.createElement("input");
-      name.placeholder = "Nombre semestre (Ej: 2025-1)";
-      name.value = sem.name || "";
-      name.oninput = syncDetailToData;
-
-      header.append(name);
-
-      const subs = document.createElement("div");
-      subs.className = "semester-subjects";
-
-      (sem.subjects || []).forEach(s => createSubjectCardDOM(subs, s));
-      if (!sem.subjects?.length) createSubjectCardDOM(subs);
-
-      const add = document.createElement("button");
-      add.className = "btn-primary";
-      add.style.fontSize = "0.8rem";
-      add.textContent = "Agregar asignatura";
-      add.onclick = () => { createSubjectCardDOM(subs); syncDetailToData(); };
-
-      const footer = document.createElement("div");
-      footer.className = "semester-footer";
-      footer.innerHTML = `Promedio semestre: <span class="semester-average">-</span>`;
-
-      card.append(header, subs, add, footer);
-      semesterDetailEl.append(card);
-
-      syncDetailToData();
-    }
-
-    function syncDetailToData() {
-      if (selectedSemesterIndex === null) return;
-      const semCard = semesterDetailEl.querySelector(".semester-card");
-      if (!semCard) return;
-
-      const semName = semCard.querySelector(".semester-header input").value;
-      const subs = [];
-
-      let c = 0, sN = 0, sR = 0;
-
-      semCard.querySelectorAll(".subject-card").forEach(sc => {
-        const name = sc.querySelector(".subject-header input").value;
-        const evals = [];
-        let tot = 0, w = 0;
-
-        sc.querySelectorAll("tbody tr").forEach(tr => {
-          const inputs = tr.querySelectorAll("input");
-          const g = parseFloat(inputs[0].value);
-          const p = parseFloat(inputs[1].value);
-          evals.push({ grade: inputs[0].value, percent: inputs[1].value });
-
-          if (!isNaN(g) && !isNaN(p)) { tot += p; w += g * p; }
+            html += `
+                    <button class="btn btn-add" onclick="agregarEvaluacion(${i},${j})">+ Agregar nota</button>
+                </div>
+            `;
         });
 
-        const avgN = sc.querySelector(".subject-average");
-        const wN = sc.querySelector(".subject-weight");
-        const tag = sc.querySelector(".subject-tag");
+        html += `
+            <button class="btn btn-blue" onclick="agregarAsignatura(${i})">+ Agregar asignatura</button>
+        `;
 
-        if (tot > 0) {
-          const avg = w / tot;
-          const r = customRound(avg);
-          avgN.innerHTML = `Normal: ${avg.toFixed(2)}<br>Redondeado: <strong>${r}</strong>`;
-          wN.textContent = tot.toFixed(1) + "%";
-
-          if (Math.abs(tot - 100) < 1) {
-            tag.textContent = "OK"; tag.className = "subject-tag tag tag-ok";
-          } else {
-            tag.textContent = "No suma 100%"; tag.className = "subject-tag tag tag-bad";
-          }
-
-          c++; sN += avg; sR += r;
-        } else {
-          avgN.textContent = "-";
-          wN.textContent = "0%";
-          tag.textContent = "";
-        }
-
-        subs.push({ name, evaluations: evals });
-      });
-
-      const semAvgEl = semCard.querySelector(".semester-average");
-      if (c)
-        semAvgEl.innerHTML =
-          `Normal: ${(sN / c).toFixed(2)}<br>Con redondeados: <strong>${(sR / c).toFixed(2)}</strong>`;
-      else
-        semAvgEl.textContent = "-";
-
-      semestersData[selectedSemesterIndex] = { name: semName, subjects: subs };
-
-      saveData();
-      renderSemesterList();
-      renderGlobalAverage();
-    }
-
-    function renderGlobalAverage() {
-      let c = 0, sN = 0, sR = 0;
-
-      semestersData.forEach(sem => {
-        sem.subjects?.forEach(sub => {
-          let tot = 0, w = 0;
-          sub.evaluations?.forEach(ev => {
-            const g = parseFloat(ev.grade);
-            const p = parseFloat(ev.percent);
-            if (!isNaN(g) && !isNaN(p)) { tot += p; w += g * p; }
-          });
-          if (tot > 0) {
-            const avg = w / tot;
-            const r = customRound(avg);
-            c++; sN += avg; sR += r;
-          }
-        });
-      });
-
-      if (!c)
-        globalAverageEl.textContent = "-";
-      else
-        globalAverageEl.innerHTML =
-          `Normal: ${(sN / c).toFixed(2)}<br>Con redondeados: <strong>${(sR / c).toFixed(2)}</strong>`;
-    }
-
-    async function saveData() {
-      // Siempre guardamos local
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(semestersData));
-
-      // Si hay usuario logueado, guardamos en Firestore
-      if (currentUser) {
-        try {
-          const ref = doc(db, "promedios_semestres", currentUser.uid);
-          await setDoc(ref, {
-            semesters: semestersData,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-          console.log("Datos guardados en Firestore para:", currentUser.uid);
-        } catch (e) {
-          console.error("Error guardando en Firestore:", e);
-        }
-      } else {
-        console.log("Sin usuario logueado: solo se guarda en localStorage.");
-      }
-    }
-
-    function loadFromLocal() {
-      const d = localStorage.getItem(LOCAL_STORAGE_KEY);
-      semestersData = d ? JSON.parse(d) : [];
-      renderSemesterList();
-      renderGlobalAverage();
-    }
-
-    async function loadFromRemote(u) {
-      try {
-        const ref = doc(db, "promedios_semestres", u.uid);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          semestersData = snap.data().semesters || [];
-        } else {
-          semestersData = [];
-        }
-      } catch (e) {
-        console.error("Error cargando desde Firestore, usando local:", e);
-        loadFromLocal();
-        return;
-      }
-      renderSemesterList();
-      renderGlobalAverage();
-    }
-
-    loginBtn.onclick = () => signInWithPopup(auth, provider);
-    logoutBtn.onclick = () => signOut(auth);
-
-    onAuthStateChanged(auth, async u => {
-      currentUser = u;
-      if (u) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userInfoEl.textContent = "Sesión: " + (u.displayName || u.email);
-        await loadFromRemote(u);
-      } else {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        userInfoEl.textContent = "Modo local (sin sesión)";
-        loadFromLocal();
-      }
+        div.innerHTML = html;
+        cont.appendChild(div);
     });
 
-    addSemesterBtn.onclick = () => {
-      semestersData.push({
-        name: "",
-        subjects: [{ name: "", evaluations: [{ grade: "", percent: "" }] }]
-      });
-      saveData();
-      renderSemesterList();
-      renderGlobalAverage();
-    };
+    actualizarGeneral();
+}
 
-    recalcAllBtn.onclick = () => {
-      renderSemesterList();
-      renderGlobalAverage();
-      if (viewDetail.style.display === "block") renderSemesterDetail();
-    };
+render();
+</script>
 
-    clearAllBtn.onclick = async () => {
-      if (!confirm("¿Seguro?")) return;
-      semestersData = [];
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-      if (currentUser) {
-        try {
-          const ref = doc(db, "promedios_semestres", currentUser.uid);
-          await setDoc(ref, { semesters: [], updatedAt: serverTimestamp() }, { merge: true });
-        } catch (e) {
-          console.error("Error limpiando Firestore:", e);
-        }
-      }
-      renderSemesterList();
-      renderGlobalAverage();
-      showListView();
-    };
-
-    backBtn.onclick = () => {
-      syncDetailToData();
-      showListView();
-    };
-
-    deleteSemesterDetailBtn.onclick = async () => {
-      if (!confirm("¿Eliminar semestre?")) return;
-      semestersData.splice(selectedSemesterIndex, 1);
-      await saveData();
-      renderSemesterList();
-      renderGlobalAverage();
-      showListView();
-    };
-
-    // Carga inicial local mientras se resuelve auth
-    loadFromLocal();
-  </script>
-
-  <!-- SERVICE WORKER PWA -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
-        .catch(err => console.log('SW error:', err));
-    }
-  </script>
 </body>
 </html>
