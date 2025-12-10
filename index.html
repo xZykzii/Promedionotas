@@ -42,7 +42,6 @@
       color: var(--text);
     }
 
-    /* Botones */
     button {
       border: none;
       border-radius: 999px;
@@ -80,7 +79,6 @@
       flex-wrap: wrap;
     }
 
-    /* Semestres (máx ~2 por fila) */
     .semesters-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
@@ -273,9 +271,6 @@
   </div>
 
   <script type="module">
-    /* ========================
-       Firebase imports
-    ========================= */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
       getAuth,
@@ -291,14 +286,14 @@
       setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    /* ========================
-       CONFIGURA TU FIREBASE
-    ========================= */
+    // Tu config real
     const firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_AUTH_DOMAIN",
-      projectId: "TU_PROJECT_ID"
-      // agrega otros campos si tu proyecto los usa (appId, etc.)
+      apiKey: "AIzaSyAcbTdLv_uULcoIHvtrp5nfoB1Q_m-ziDc",
+      authDomain: "promedios-ubb.firebaseapp.com",
+      projectId: "promedios-ubb",
+      storageBucket: "promedios-ubb.firebasestorage.app",
+      messagingSenderId: "170154498162",
+      appId: "1:170154498162:web:d79694baf51cc25382caeb"
     };
 
     const appFB = initializeApp(firebaseConfig);
@@ -306,9 +301,6 @@
     const provider = new GoogleAuthProvider();
     const db = getFirestore(appFB);
 
-    /* ========================
-       DOM
-    ========================= */
     const semestersContainer = document.getElementById("semestersContainer");
     const globalAverageEl = document.getElementById("globalAverage");
 
@@ -323,10 +315,7 @@
     const LOCAL_STORAGE_KEY = "promedios_semestres_v1";
     let currentUser = null;
 
-    /* ========================
-       Redondeo especial
-       (decimal >= 0.45 → sube)
-    ========================= */
+    // Redondeo especial: decimal >= 0.45 sube
     function customRound(value) {
       const decimal = value - Math.floor(value);
       return decimal >= 0.45 ? Math.ceil(value) : Math.floor(value);
@@ -345,9 +334,7 @@
       });
     }
 
-    /* ========================
-       Crear Subject (Asignatura)
-    ========================= */
+    // Crear tarjeta de asignatura
     function createSubjectCard(subjectsContainerEl, subjectData = {}) {
       const subjectCard = document.createElement("div");
       subjectCard.className = "subject-card";
@@ -472,9 +459,7 @@
       updateNoteLabels(subjectCard);
     }
 
-    /* ========================
-       Crear Semester
-    ========================= */
+    // Crear tarjeta de semestre
     function createSemesterCard(semData = {}) {
       const semesterCard = document.createElement("div");
       semesterCard.className = "semester-card";
@@ -533,9 +518,6 @@
       semestersContainer.appendChild(semesterCard);
     }
 
-    /* ========================
-       Render desde datos
-    ========================= */
     function renderFromData(semestersData) {
       semestersContainer.innerHTML = "";
       if (Array.isArray(semestersData) && semestersData.length) {
@@ -546,9 +528,6 @@
       calculateAll();
     }
 
-    /* ========================
-       Cargar local / remoto
-    ========================= */
     function loadFromLocal() {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (!raw) {
@@ -579,9 +558,6 @@
       }
     }
 
-    /* ========================
-       Recolección y guardado
-    ========================= */
     function collectData() {
       const semestersData = [];
       semestersContainer.querySelectorAll(".semester-card").forEach(semCard => {
@@ -614,9 +590,6 @@
       }
     }
 
-    /* ========================
-       Cálculo de promedios
-    ========================= */
     function calculateAll() {
       let totalSubjectsAll = 0;
       let sumNormalAll = 0;
@@ -705,9 +678,7 @@
       }
     }
 
-    /* ========================
-       Auth Google
-    ========================= */
+    // Auth Google
     loginBtn.addEventListener("click", async () => {
       try {
         await signInWithPopup(auth, provider);
@@ -740,9 +711,7 @@
       }
     });
 
-    /* ========================
-       Botones generales
-    ========================= */
+    // Botones generales
     addSemesterBtn.addEventListener("click", () => {
       createSemesterCard();
       handleChange();
@@ -764,10 +733,7 @@
       calculateAll();
     });
 
-    /* ========================
-       Inicio
-    ========================= */
-    // Por si el onAuthStateChanged se demora un poco
+    // Inicio: algo local mientras se resuelve el estado de auth
     loadFromLocal();
   </script>
 </body>
