@@ -2,12 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Promedios por Asignatura</title>
+  <title>Promedios por Semestre y Asignatura</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
       --bg: #0f0f0f;
       --card: #1a1a1a;
+      --card-soft: #181818;
       --text: #e5e5e5;
       --text-soft: #bbbbbb;
       --input-bg: #262626;
@@ -30,7 +31,7 @@
     }
 
     .app {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
     }
 
@@ -54,14 +55,6 @@
     .btn-secondary { background: #333; color: var(--text); }
     .btn-danger { background: var(--danger); color: white; }
 
-    .top-bar {
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
     .auth-bar {
       margin-bottom: 16px;
       display: flex;
@@ -79,27 +72,45 @@
       flex-wrap: wrap;
     }
 
-    /* Tarjetas de ramos: máximo ~2 por fila */
-    .subjects-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 16px;
+    .top-bar {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    .subject-card {
+    /* Semestres (máx ~2 por fila) */
+    .semesters-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 18px;
+    }
+
+    .semester-card {
       background: var(--card);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
       padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    .subject-header {
+    .semester-header {
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .semester-header input[type="text"] {
+      flex: 1;
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 0.95rem;
     }
 
     input[type="text"],
@@ -120,22 +131,54 @@
       box-shadow: 0 0 0 1px var(--accent);
     }
 
+    .semester-subjects {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .subject-card {
+      background: var(--card-soft);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .subject-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .subject-header input[type="text"] {
+      flex: 1;
+      padding: 5px;
+      border-radius: 6px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
 
     th, td {
       border-bottom: 1px solid #2a2a2a;
-      padding: 4px;
+      padding: 3px;
       text-align: left;
       color: var(--text);
     }
 
     .note-label {
       font-weight: 600;
-      color: var(--text);
       white-space: nowrap;
     }
 
@@ -146,22 +189,34 @@
     }
 
     .percent-wrapper span {
-      padding: 4px 6px;
+      padding: 3px 6px;
       background: #333;
       border-radius: 4px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-soft);
     }
 
     .subject-footer {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-soft);
     }
 
     .subject-average {
       font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    .semester-footer {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid #272727;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+
+    .semester-average {
+      font-weight: bold;
       font-size: 0.95rem;
-      color: var(--text);
     }
 
     .tag {
@@ -193,7 +248,7 @@
 </head>
 <body>
   <div class="app">
-    <h1>Promedios por Asignatura</h1>
+    <h1>Promedios por Semestre y Asignatura</h1>
 
     <div class="auth-bar">
       <div id="userInfo">Modo local (sin sesión)</div>
@@ -204,36 +259,46 @@
     </div>
 
     <div class="top-bar">
-      <button class="btn-primary" id="addSubjectBtn">Agregar asignatura</button>
+      <button class="btn-primary" id="addSemesterBtn">Agregar semestre</button>
       <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
       <button class="btn-danger" id="clearAllBtn">Borrar todo</button>
     </div>
 
-    <div class="subjects-container" id="subjectsContainer"></div>
+    <div class="semesters-container" id="semestersContainer"></div>
 
     <div class="global-box">
-      Promedio general (usando promedios redondeados de cada ramo):
+      Promedio general (todas las asignaturas de todos los semestres, usando promedios redondeados):
       <div class="global-main" id="globalAverage">-</div>
     </div>
   </div>
 
-  <!-- Lógica de la app + Firebase -->
   <script type="module">
-    /* ====== IMPORTS FIREBASE (v10) ====== */
+    /* ========================
+       Firebase imports
+    ========================= */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, setDoc
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    /* ====== CONFIGURA TU PROYECTO AQUÍ ====== */
+    /* ========================
+       CONFIGURA TU FIREBASE
+    ========================= */
     const firebaseConfig = {
       apiKey: "TU_API_KEY",
       authDomain: "TU_AUTH_DOMAIN",
-      projectId: "TU_PROJECT_ID",
-      // si usas otros campos (storageBucket, appId, etc.) los agregas acá
+      projectId: "TU_PROJECT_ID"
+      // agrega otros campos si tu proyecto los usa (appId, etc.)
     };
 
     const appFB = initializeApp(firebaseConfig);
@@ -241,43 +306,51 @@
     const provider = new GoogleAuthProvider();
     const db = getFirestore(appFB);
 
-    /* ====== DOM ELEMENTS ====== */
-    const subjectsContainer = document.getElementById("subjectsContainer");
+    /* ========================
+       DOM
+    ========================= */
+    const semestersContainer = document.getElementById("semestersContainer");
     const globalAverageEl = document.getElementById("globalAverage");
-    const addSubjectBtn = document.getElementById("addSubjectBtn");
+
+    const addSemesterBtn = document.getElementById("addSemesterBtn");
     const recalcAllBtn = document.getElementById("recalcAllBtn");
     const clearAllBtn = document.getElementById("clearAllBtn");
+
     const userInfoEl = document.getElementById("userInfo");
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    const LOCAL_STORAGE_KEY = "promedios_dark_v2";
+    const LOCAL_STORAGE_KEY = "promedios_semestres_v1";
+    let currentUser = null;
 
-    let currentUser = null; // usuario logeado
-
-    // Redondeo especial: decimal >= 0.45 sube
+    /* ========================
+       Redondeo especial
+       (decimal >= 0.45 → sube)
+    ========================= */
     function customRound(value) {
       const decimal = value - Math.floor(value);
       return decimal >= 0.45 ? Math.ceil(value) : Math.floor(value);
     }
 
     function handleChange() {
-      saveData();      // guarda en local y si hay usuario, en Firestore
-      calculateAll();  // recalcula promedios
+      saveData();
+      calculateAll();
     }
 
-    function updateNoteLabels(card) {
-      const rows = card.querySelectorAll("tbody tr");
+    function updateNoteLabels(subjectCard) {
+      const rows = subjectCard.querySelectorAll("tbody tr");
       rows.forEach((tr, idx) => {
         const label = tr.querySelector(".note-label");
         if (label) label.textContent = "Nota " + (idx + 1);
       });
     }
 
-    /* ====== CREAR TARJETA DE ASIGNATURA ====== */
-    function createSubjectCard(data = {}) {
-      const card = document.createElement("div");
-      card.className = "subject-card";
+    /* ========================
+       Crear Subject (Asignatura)
+    ========================= */
+    function createSubjectCard(subjectsContainerEl, subjectData = {}) {
+      const subjectCard = document.createElement("div");
+      subjectCard.className = "subject-card";
 
       const header = document.createElement("div");
       header.className = "subject-header";
@@ -285,20 +358,20 @@
       const nameInput = document.createElement("input");
       nameInput.type = "text";
       nameInput.placeholder = "Nombre asignatura";
-      nameInput.value = data.name || "";
+      nameInput.value = subjectData.name || "";
       nameInput.addEventListener("input", handleChange);
 
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "Eliminar";
-      deleteBtn.className = "btn-danger";
-      deleteBtn.style.fontSize = "0.75rem";
-      deleteBtn.addEventListener("click", () => {
-        card.remove();
+      const deleteSubjectBtn = document.createElement("button");
+      deleteSubjectBtn.textContent = "Eliminar ramo";
+      deleteSubjectBtn.className = "btn-danger";
+      deleteSubjectBtn.style.fontSize = "0.7rem";
+      deleteSubjectBtn.addEventListener("click", () => {
+        subjectCard.remove();
         handleChange();
       });
 
       header.appendChild(nameInput);
-      header.appendChild(deleteBtn);
+      header.appendChild(deleteSubjectBtn);
 
       const table = document.createElement("table");
       table.innerHTML = `
@@ -345,17 +418,17 @@
         tdPercent.appendChild(pWrap);
 
         const tdActions = document.createElement("td");
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "X";
-        delBtn.className = "btn-danger";
-        delBtn.style.fontSize = "0.75rem";
-        delBtn.style.padding = "2px 6px";
-        delBtn.addEventListener("click", () => {
+        const delEvalBtn = document.createElement("button");
+        delEvalBtn.textContent = "X";
+        delEvalBtn.className = "btn-danger";
+        delEvalBtn.style.fontSize = "0.7rem";
+        delEvalBtn.style.padding = "2px 6px";
+        delEvalBtn.addEventListener("click", () => {
           tr.remove();
-          updateNoteLabels(card);
+          updateNoteLabels(subjectCard);
           handleChange();
         });
-        tdActions.appendChild(delBtn);
+        tdActions.appendChild(delEvalBtn);
 
         tr.appendChild(tdLabel);
         tr.appendChild(tdGrade);
@@ -363,11 +436,11 @@
         tr.appendChild(tdActions);
 
         tbody.appendChild(tr);
-        updateNoteLabels(card);
+        updateNoteLabels(subjectCard);
       }
 
-      if (data.evaluations && data.evaluations.length) {
-        data.evaluations.forEach(ev => addEval(ev));
+      if (subjectData.evaluations && subjectData.evaluations.length) {
+        subjectData.evaluations.forEach(ev => addEval(ev));
       } else {
         addEval();
       }
@@ -375,7 +448,7 @@
       const addEvalBtn = document.createElement("button");
       addEvalBtn.textContent = "Agregar nota";
       addEvalBtn.className = "btn-secondary";
-      addEvalBtn.style.fontSize = "0.8rem";
+      addEvalBtn.style.fontSize = "0.75rem";
       addEvalBtn.addEventListener("click", () => {
         addEval();
         handleChange();
@@ -390,27 +463,92 @@
         <span class="subject-tag tag"></span>
       `;
 
-      card.appendChild(header);
-      card.appendChild(table);
-      card.appendChild(addEvalBtn);
-      card.appendChild(footer);
+      subjectCard.appendChild(header);
+      subjectCard.appendChild(table);
+      subjectCard.appendChild(addEvalBtn);
+      subjectCard.appendChild(footer);
 
-      subjectsContainer.appendChild(card);
-      updateNoteLabels(card);
+      subjectsContainerEl.appendChild(subjectCard);
+      updateNoteLabels(subjectCard);
     }
 
-    /* ====== HIDRATAR UI DESDE DATA ====== */
-    function renderFromData(subjectsData) {
-      subjectsContainer.innerHTML = "";
-      if (Array.isArray(subjectsData) && subjectsData.length) {
-        subjectsData.forEach(d => createSubjectCard(d));
+    /* ========================
+       Crear Semester
+    ========================= */
+    function createSemesterCard(semData = {}) {
+      const semesterCard = document.createElement("div");
+      semesterCard.className = "semester-card";
+
+      const header = document.createElement("div");
+      header.className = "semester-header";
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = "Nombre semestre (Ej: 2025-1)";
+      nameInput.value = semData.name || "";
+      nameInput.addEventListener("input", handleChange);
+
+      const delSemBtn = document.createElement("button");
+      delSemBtn.textContent = "Eliminar semestre";
+      delSemBtn.className = "btn-danger";
+      delSemBtn.style.fontSize = "0.75rem";
+      delSemBtn.addEventListener("click", () => {
+        semesterCard.remove();
+        handleChange();
+      });
+
+      header.appendChild(nameInput);
+      header.appendChild(delSemBtn);
+
+      const subjectsWrapper = document.createElement("div");
+      subjectsWrapper.className = "semester-subjects";
+
+      if (semData.subjects && semData.subjects.length) {
+        semData.subjects.forEach(sub => createSubjectCard(subjectsWrapper, sub));
       } else {
-        createSubjectCard();
+        createSubjectCard(subjectsWrapper);
+      }
+
+      const addSubjectBtn = document.createElement("button");
+      addSubjectBtn.textContent = "Agregar asignatura";
+      addSubjectBtn.className = "btn-primary";
+      addSubjectBtn.style.fontSize = "0.8rem";
+      addSubjectBtn.addEventListener("click", () => {
+        createSubjectCard(subjectsWrapper);
+        handleChange();
+      });
+
+      const semFooter = document.createElement("div");
+      semFooter.className = "semester-footer";
+      semFooter.innerHTML = `
+        Promedio semestre:
+        <span class="semester-average">-</span>
+      `;
+
+      semesterCard.appendChild(header);
+      semesterCard.appendChild(subjectsWrapper);
+      semesterCard.appendChild(addSubjectBtn);
+      semesterCard.appendChild(semFooter);
+
+      semestersContainer.appendChild(semesterCard);
+    }
+
+    /* ========================
+       Render desde datos
+    ========================= */
+    function renderFromData(semestersData) {
+      semestersContainer.innerHTML = "";
+      if (Array.isArray(semestersData) && semestersData.length) {
+        semestersData.forEach(sem => createSemesterCard(sem));
+      } else {
+        createSemesterCard();
       }
       calculateAll();
     }
 
-    /* ====== LECTURA LOCAL / REMOTA ====== */
+    /* ========================
+       Cargar local / remoto
+    ========================= */
     function loadFromLocal() {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (!raw) {
@@ -427,10 +565,10 @@
 
     async function loadFromRemote(user) {
       try {
-        const ref = doc(db, "promedios", user.uid);
+        const ref = doc(db, "promedios_semestres", user.uid);
         const snap = await getDoc(ref);
         if (snap.exists()) {
-          const data = snap.data().subjects || [];
+          const data = snap.data().semesters || [];
           renderFromData(data);
         } else {
           renderFromData(null);
@@ -441,96 +579,125 @@
       }
     }
 
-    /* ====== GUARDAR (LOCAL + FIRESTORE SI HAY USER) ====== */
-    function collectSubjectsData() {
-      const subjectsData = [];
-      subjectsContainer.querySelectorAll(".subject-card").forEach(card => {
-        const name = card.querySelector(".subject-header input").value;
-        const evals = [];
-        card.querySelectorAll("tbody tr").forEach(tr => {
-          const inputs = tr.querySelectorAll("input");
-          const grade = inputs[0].value;
-          const percent = inputs[1].value;
-          evals.push({ grade, percent });
+    /* ========================
+       Recolección y guardado
+    ========================= */
+    function collectData() {
+      const semestersData = [];
+      semestersContainer.querySelectorAll(".semester-card").forEach(semCard => {
+        const semName = semCard.querySelector(".semester-header input").value;
+        const subjectsData = [];
+        semCard.querySelectorAll(".subject-card").forEach(subCard => {
+          const subName = subCard.querySelector(".subject-header input").value;
+          const evals = [];
+          subCard.querySelectorAll("tbody tr").forEach(tr => {
+            const inputs = tr.querySelectorAll("input");
+            const grade = inputs[0].value;
+            const percent = inputs[1].value;
+            evals.push({ grade, percent });
+          });
+          subjectsData.push({ name: subName, evaluations: evals });
         });
-        subjectsData.push({ name, evaluations: evals });
+        semestersData.push({ name: semName, subjects: subjectsData });
       });
-      return subjectsData;
+      return semestersData;
     }
 
     function saveData() {
-      const subjectsData = collectSubjectsData();
-      // Local
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(subjectsData));
-      // Remoto (si hay usuario)
+      const semestersData = collectData();
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(semestersData));
       if (currentUser) {
-        const ref = doc(db, "promedios", currentUser.uid);
-        setDoc(ref, { subjects: subjectsData }, { merge: true }).catch(err =>
+        const ref = doc(db, "promedios_semestres", currentUser.uid);
+        setDoc(ref, { semesters: semestersData }, { merge: true }).catch(err =>
           console.error("Error guardando en Firestore:", err)
         );
       }
     }
 
-    /* ====== CÁLCULO DE PROMEDIOS ====== */
+    /* ========================
+       Cálculo de promedios
+    ========================= */
     function calculateAll() {
-      let subjects = 0;
-      let sumNormal = 0;
-      let sumRounded = 0;
+      let totalSubjectsAll = 0;
+      let sumNormalAll = 0;
+      let sumRoundedAll = 0;
 
-      subjectsContainer.querySelectorAll(".subject-card").forEach(card => {
-        const rows = card.querySelectorAll("tbody tr");
-        let totalW = 0;
-        let weighted = 0;
+      semestersContainer.querySelectorAll(".semester-card").forEach(semCard => {
+        let semSubjectCount = 0;
+        let semSumNormal = 0;
+        let semSumRounded = 0;
 
-        rows.forEach(tr => {
-          const inputs = tr.querySelectorAll("input");
-          const grade = parseFloat(inputs[0].value);
-          const percent = parseFloat(inputs[1].value);
-          if (!isNaN(grade) && !isNaN(percent)) {
-            totalW += percent;
-            weighted += grade * percent;
+        semCard.querySelectorAll(".subject-card").forEach(subCard => {
+          const rows = subCard.querySelectorAll("tbody tr");
+          let totalW = 0;
+          let weighted = 0;
+
+          rows.forEach(tr => {
+            const inputs = tr.querySelectorAll("input");
+            const grade = parseFloat(inputs[0].value);
+            const percent = parseFloat(inputs[1].value);
+            if (!isNaN(grade) && !isNaN(percent)) {
+              totalW += percent;
+              weighted += grade * percent;
+            }
+          });
+
+          const avgNode = subCard.querySelector(".subject-average");
+          const wNode = subCard.querySelector(".subject-weight");
+          const tagNode = subCard.querySelector(".subject-tag");
+
+          if (totalW > 0) {
+            const avg = weighted / totalW;
+            const rounded = customRound(avg);
+
+            avgNode.innerHTML = `
+              Normal: ${avg.toFixed(2)}<br>
+              Redondeado: <strong>${rounded}</strong>
+            `;
+
+            wNode.textContent = totalW.toFixed(1) + "%";
+
+            if (Math.abs(totalW - 100) < 1) {
+              tagNode.textContent = "OK";
+              tagNode.className = "subject-tag tag tag-ok";
+            } else {
+              tagNode.textContent = "No suma 100%";
+              tagNode.className = "subject-tag tag tag-bad";
+            }
+
+            semSubjectCount++;
+            semSumNormal += avg;
+            semSumRounded += rounded;
+
+            totalSubjectsAll++;
+            sumNormalAll += avg;
+            sumRoundedAll += rounded;
+          } else {
+            avgNode.textContent = "-";
+            wNode.textContent = "0%";
+            tagNode.textContent = "";
+            tagNode.className = "subject-tag tag";
           }
         });
 
-        const avgNode = card.querySelector(".subject-average");
-        const wNode = card.querySelector(".subject-weight");
-        const tagNode = card.querySelector(".subject-tag");
-
-        if (totalW > 0) {
-          const avg = weighted / totalW;        // promedio normal
-          const rounded = customRound(avg);     // redondeado
-
-          avgNode.innerHTML = `
-            Normal: ${avg.toFixed(2)}<br>
-            Redondeado: <strong>${rounded}</strong>
+        const semAvgNode = semCard.querySelector(".semester-average");
+        if (semSubjectCount > 0) {
+          const semAvgNormal = semSumNormal / semSubjectCount;
+          const semAvgRounded = semSumRounded / semSubjectCount;
+          semAvgNode.innerHTML = `
+            Normal: ${semAvgNormal.toFixed(2)}<br>
+            Con redondeados: <strong>${semAvgRounded.toFixed(2)}</strong>
           `;
-
-          wNode.textContent = totalW.toFixed(1) + "%";
-
-          if (Math.abs(totalW - 100) < 1) {
-            tagNode.textContent = "OK";
-            tagNode.className = "subject-tag tag tag-ok";
-          } else {
-            tagNode.textContent = "No suma 100%";
-            tagNode.className = "subject-tag tag tag-bad";
-          }
-
-          subjects++;
-          sumNormal += avg;
-          sumRounded += rounded;
         } else {
-          avgNode.textContent = "-";
-          wNode.textContent = "0%";
-          tagNode.textContent = "";
-          tagNode.className = "subject-tag tag";
+          semAvgNode.textContent = "-";
         }
       });
 
-      if (subjects === 0) {
+      if (totalSubjectsAll === 0) {
         globalAverageEl.textContent = "-";
       } else {
-        const generalNormal = sumNormal / subjects;
-        const generalRounded = sumRounded / subjects;
+        const generalNormal = sumNormalAll / totalSubjectsAll;
+        const generalRounded = sumRoundedAll / totalSubjectsAll;
         globalAverageEl.innerHTML = `
           Normal: ${generalNormal.toFixed(2)}<br>
           Con redondeados: <strong>${generalRounded.toFixed(2)}</strong>
@@ -538,7 +705,9 @@
       }
     }
 
-    /* ====== LOGIN / LOGOUT GOOGLE ====== */
+    /* ========================
+       Auth Google
+    ========================= */
     loginBtn.addEventListener("click", async () => {
       try {
         await signInWithPopup(auth, provider);
@@ -571,9 +740,11 @@
       }
     });
 
-    /* ====== BOTONES GENERALES ====== */
-    addSubjectBtn.addEventListener("click", () => {
-      createSubjectCard();
+    /* ========================
+       Botones generales
+    ========================= */
+    addSemesterBtn.addEventListener("click", () => {
+      createSemesterCard();
       handleChange();
     });
 
@@ -585,17 +756,18 @@
       if (!confirm("¿Seguro que quieres borrar todo?")) return;
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       if (currentUser) {
-        const ref = doc(db, "promedios", currentUser.uid);
-        setDoc(ref, { subjects: [] }, { merge: true }).catch(console.error);
+        const ref = doc(db, "promedios_semestres", currentUser.uid);
+        setDoc(ref, { semesters: [] }, { merge: true }).catch(console.error);
       }
-      subjectsContainer.innerHTML = "";
-      createSubjectCard();
+      semestersContainer.innerHTML = "";
+      createSemesterCard();
       calculateAll();
     });
 
-    /* ====== INICIO (modo sin sesión hasta que Firebase cargue estado) ====== */
-    // onAuthStateChanged ya llama a loadFromLocal() si no hay usuario,
-    // pero por si se demora, mostramos algo funcional:
+    /* ========================
+       Inicio
+    ========================= */
+    // Por si el onAuthStateChanged se demora un poco
     loadFromLocal();
   </script>
 </body>
