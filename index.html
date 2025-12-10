@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Promedios</title>
+  <title>Promedios UBB</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- PWA -->
@@ -215,7 +215,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     /* CONFIG REAL */
     const firebaseConfig = {
@@ -576,11 +576,24 @@
           `Normal: ${(sN / c).toFixed(2)}<br>Con redondeados: <strong>${(sR / c).toFixed(2)}</strong>`;
     }
 
-    function saveData() {
+    async function saveData() {
+      // Siempre guardamos local
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(semestersData));
+
+      // Si hay usuario logueado, guardamos en Firestore
       if (currentUser) {
-        const ref = doc(db, "promedios_semestres", currentUser.uid);
-        setDoc(ref, { semesters: semestersData }, { merge: true });
+        try {
+          const ref = doc(db, "promedios_semestres", currentUser.uid);
+          await setDoc(ref, {
+            semesters: semestersData,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          console.log("Datos guardados en Firestore para:", currentUser.uid);
+        } catch (e) {
+          console.error("Error guardando en Firestore:", e);
+        }
+      } else {
+        console.log("Sin usuario logueado: solo se guarda en localStorage.");
       }
     }
 
@@ -595,8 +608,13 @@
       try {
         const ref = doc(db, "promedios_semestres", u.uid);
         const snap = await getDoc(ref);
-        semestersData = snap.exists() ? snap.data().semesters : [];
-      } catch {
+        if (snap.exists()) {
+          semestersData = snap.data().semesters || [];
+        } else {
+          semestersData = [];
+        }
+      } catch (e) {
+        console.error("Error cargando desde Firestore, usando local:", e);
         loadFromLocal();
         return;
       }
@@ -638,13 +656,17 @@
       if (viewDetail.style.display === "block") renderSemesterDetail();
     };
 
-    clearAllBtn.onclick = () => {
+    clearAllBtn.onclick = async () => {
       if (!confirm("¿Seguro?")) return;
       semestersData = [];
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       if (currentUser) {
-        const ref = doc(db, "promedios_semestres", currentUser.uid);
-        setDoc(ref, { semesters: [] });
+        try {
+          const ref = doc(db, "promedios_semestres", currentUser.uid);
+          await setDoc(ref, { semesters: [], updatedAt: serverTimestamp() }, { merge: true });
+        } catch (e) {
+          console.error("Error limpiando Firestore:", e);
+        }
       }
       renderSemesterList();
       renderGlobalAverage();
@@ -656,24 +678,25 @@
       showListView();
     };
 
-    deleteSemesterDetailBtn.onclick = () => {
+    deleteSemesterDetailBtn.onclick = async () => {
       if (!confirm("¿Eliminar semestre?")) return;
       semestersData.splice(selectedSemesterIndex, 1);
-      saveData();
+      await saveData();
       renderSemesterList();
       renderGlobalAverage();
       showListView();
     };
 
+    // Carga inicial local mientras se resuelve auth
     loadFromLocal();
   </script>
 
   <!-- SERVICE WORKER PWA -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js');
+      navigator.serviceWorker.register('./sw.js')
+        .catch(err => console.log('SW error:', err));
     }
   </script>
-
 </body>
 </html>
