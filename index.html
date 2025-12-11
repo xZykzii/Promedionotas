@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Promedios</title>
+  <title>Promedios nms</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- PWA: recuerda que el proyecto vive en /Promedionotas/ -->
+  <!-- PWA: el proyecto está en /Promedionotas/ -->
   <link rel="manifest" href="/Promedionotas/manifest.json">
   <meta name="theme-color" content="#0f0f0f">
   <link rel="icon" href="/Promedionotas/icons/icon-192.png">
@@ -86,7 +86,6 @@
 
     .view { margin-bottom: 16px; }
 
-    /* LISTA DE SEMESTRES */
     .semester-list { display: flex; flex-direction: column; gap: 10px; }
 
     .semester-list-card {
@@ -103,7 +102,6 @@
     .semester-list-average { font-size: 0.85rem; color: var(--text-soft); }
     .semester-list-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
-    /* DETALLE DE SEMESTRE */
     .semester-card {
       background: var(--card);
       border-radius: 16px;
@@ -177,7 +175,7 @@
 </head>
 <body>
   <div class="app">
-    <h1>Promedios</h1>
+    <h1>Promedios nms</h1>
 
     <div class="auth-bar">
       <div id="userInfo">Modo local (sin sesión)</div>
@@ -187,7 +185,6 @@
       </div>
     </div>
 
-    <!-- LISTA -->
     <div id="viewList" class="view">
       <div class="top-bar">
         <button class="btn-primary" id="addSemesterBtn">Agregar semestre</button>
@@ -197,7 +194,6 @@
       <div id="semesterList" class="semester-list"></div>
     </div>
 
-    <!-- DETALLE -->
     <div id="viewDetail" class="view" style="display:none;">
       <div class="top-bar" style="justify-content:space-between;">
         <button class="btn-secondary" id="backBtn">← Volver</button>
@@ -212,7 +208,6 @@
     </div>
   </div>
 
-  <!-- SCRIPT PRINCIPAL -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -486,6 +481,85 @@
       syncDetailToData();
     }
 
+    function renderGlobalAverage() {
+      let c = 0, sN = 0, sR = 0;
+
+      semestersData.forEach(sem => {
+        sem.subjects?.forEach(sub => {
+          let tot = 0, w = 0;
+          sub.evaluations?.forEach(ev => {
+            const g = parseFloat(ev.grade);
+            const p = parseFloat(ev.percent);
+            if (!isNaN(g) && !isNaN(p)) { tot += p; w += g * p; }
+          });
+          if (tot > 0) {
+            const avg = w / tot;
+            const r = customRound(avg);
+            c++; sN += avg; sR += r;
+          }
+        });
+      });
+
+      if (!c)
+        globalAverageEl.textContent = "-";
+      else
+        globalAverageEl.innerHTML =
+          `Normal: ${(sN / c).toFixed(2)}<br>Con redondeados: <strong>${(sR / c).toFixed(2)}</strong>`;
+    }
+
+    async function saveData() {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(semestersData));
+      console.log("Guardado localStorage");
+
+      if (currentUser) {
+        try {
+          const ref = doc(db, "promedios_semestres", currentUser.uid);
+          await setDoc(ref, {
+            semesters: semestersData,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          console.log("Guardado en Firestore para", currentUser.uid);
+        } catch (e) {
+          console.error("Error guardando en Firestore:", e);
+        }
+      } else {
+        console.log("Sin usuario logueado, solo localStorage.");
+      }
+    }
+
+    function loadFromLocal() {
+      const d = localStorage.getItem(LOCAL_STORAGE_KEY);
+      semestersData = d ? JSON.parse(d) : [];
+      console.log("Cargado desde localStorage, semestres:", semestersData.length);
+      renderSemesterList();
+      renderGlobalAverage();
+    }
+
+    async function loadFromRemote(user) {
+      try {
+        const ref = doc(db, "promedios_semestres", user.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          semestersData = snap.data().semesters || [];
+          console.log("Cargado desde Firestore, semestres:", semestersData.length);
+        } else {
+          const d = localStorage.getItem(LOCAL_STORAGE_KEY);
+          semestersData = d ? JSON.parse(d) : [];
+          console.log("Firestore vacío, subo datos locales:", semestersData.length);
+          await setDoc(ref, {
+            semesters: semestersData,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        }
+      } catch (e) {
+        console.error("Error cargando Firestore, uso local:", e);
+        loadFromLocal();
+        return;
+      }
+      renderSemesterList();
+      renderGlobalAverage();
+    }
+
     function syncDetailToData() {
       if (selectedSemesterIndex === null) return;
       const semCard = semesterDetailEl.querySelector(".semester-card");
@@ -550,80 +624,14 @@
       renderGlobalAverage();
     }
 
-    function renderGlobalAverage() {
-      let c = 0, sN = 0, sR = 0;
-
-      semestersData.forEach(sem => {
-        sem.subjects?.forEach(sub => {
-          let tot = 0, w = 0;
-          sub.evaluations?.forEach(ev => {
-            const g = parseFloat(ev.grade);
-            const p = parseFloat(ev.percent);
-            if (!isNaN(g) && !isNaN(p)) { tot += p; w += g * p; }
-          });
-          if (tot > 0) {
-            const avg = w / tot;
-            const r = customRound(avg);
-            c++; sN += avg; sR += r;
-          }
+    loginBtn.onclick = () => {
+      signInWithPopup(auth, provider)
+        .catch(err => {
+          console.error("Error login:", err);
+          alert("No se pudo iniciar sesión con Google. Revisa si xzykzii.github.io está en Dominios autorizados.");
         });
-      });
+    };
 
-      if (!c)
-        globalAverageEl.textContent = "-";
-      else
-        globalAverageEl.innerHTML =
-          `Normal: ${(sN / c).toFixed(2)}<br>Con redondeados: <strong>${(sR / c).toFixed(2)}</strong>`;
-    }
-
-    async function saveData() {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(semestersData));
-
-      if (currentUser) {
-        try {
-          const ref = doc(db, "promedios_semestres", currentUser.uid);
-          await setDoc(ref, {
-            semesters: semestersData,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        } catch (e) {
-          console.error("Error guardando en Firestore:", e);
-        }
-      }
-    }
-
-    function loadFromLocal() {
-      const d = localStorage.getItem(LOCAL_STORAGE_KEY);
-      semestersData = d ? JSON.parse(d) : [];
-      renderSemesterList();
-      renderGlobalAverage();
-    }
-
-    async function loadFromRemote(user) {
-      try {
-        const ref = doc(db, "promedios_semestres", user.uid);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          semestersData = snap.data().semesters || [];
-        } else {
-          // primera vez: si hay datos locales, súbelos
-          const d = localStorage.getItem(LOCAL_STORAGE_KEY);
-          semestersData = d ? JSON.parse(d) : [];
-          await setDoc(ref, {
-            semesters: semestersData,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        }
-      } catch (e) {
-        console.error("Error cargando Firestore, uso local:", e);
-        loadFromLocal();
-        return;
-      }
-      renderSemesterList();
-      renderGlobalAverage();
-    }
-
-    loginBtn.onclick = () => signInWithPopup(auth, provider);
     logoutBtn.onclick = () => signOut(auth);
 
     onAuthStateChanged(auth, async u => {
@@ -631,7 +639,7 @@
       if (u) {
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
-        userInfoEl.textContent = "Sesión: " + (u.displayName || u.email);
+        userInfoEl.textContent = "Sesión Google: " + (u.displayName || u.email) + " (sincronizado)";
         await loadFromRemote(u);
       } else {
         loginBtn.style.display = "inline-block";
@@ -688,11 +696,10 @@
       showListView();
     };
 
-    // carga inicial mientras se resuelve auth
+    // Carga inicial local mientras se resuelve auth
     loadFromLocal();
   </script>
 
-  <!-- SERVICE WORKER PWA REGISTRADO CON RUTA DE SUBCARPETA -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
