@@ -21,84 +21,54 @@
       --input-border: #3d3d3d;
       --accent: #2563eb;
       --danger: #ef4444;
-      --tag-ok-bg: #14532d;
-      --tag-ok-text: #bbf7d0;
-      --tag-bad-bg: #450a0a;
-      --tag-bad-text: #fecaca;
+      --ok-bg: #14532d;
+      --ok-text: #bbf7d0;
+      --bad-bg: #450a0a;
+      --bad-text: #fecaca;
+      --warn-bg: #3a2a10;
+      --warn-text: #fde68a;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    body {
-      margin: 0;
-      padding: 16px;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .app {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      margin-top: 0;
-      font-size: 1.6rem;
-      text-align: center;
-      color: var(--text);
-    }
+    body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); }
+    .app { max-width: 1200px; margin: 0 auto; }
+    h1 { margin: 0 0 10px 0; font-size: 1.6rem; text-align: center; }
 
     button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 0.9rem;
-      cursor: pointer;
+      border: none; border-radius: 999px;
+      padding: 8px 14px; font-size: 0.9rem; cursor: pointer;
     }
-
-    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary { background: var(--accent); color: #fff; }
     .btn-secondary { background: #333; color: var(--text); }
-    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-mini { padding: 6px 10px; font-size: 0.78rem; }
 
     .auth-bar {
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      font-size: 0.85rem;
-      color: var(--text-soft);
+      margin: 10px 0 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px; flex-wrap: wrap;
+      font-size: 0.85rem; color: var(--text-soft);
     }
-
-    .auth-right {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
+    .auth-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .top-bar {
       margin-bottom: 12px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
+      display: flex; justify-content: center;
+      gap: 10px; flex-wrap: wrap;
     }
 
     .view { margin-bottom: 16px; }
-
     .semester-list { display: flex; flex-direction: column; gap: 10px; }
 
     .semester-list-card {
       background: var(--card);
       border-radius: 12px;
       padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
       box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+      gap: 10px;
     }
-
-    .semester-list-name { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .semester-list-main { display: flex; flex-direction: column; gap: 4px; }
+    .semester-list-name { font-size: 1rem; font-weight: 700; }
     .semester-list-average { font-size: 0.85rem; color: var(--text-soft); }
     .semester-list-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
@@ -107,72 +77,177 @@
       border-radius: 16px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.5);
       padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: flex; flex-direction: column; gap: 10px;
     }
-
-    .semester-header { display: flex; align-items: center; gap: 8px; }
 
     input[type="text"], input[type="number"] {
       width: 100%;
-      padding: 6px;
-      border-radius: 6px;
+      padding: 7px;
+      border-radius: 8px;
       border: 1px solid var(--input-border);
       background: var(--input-bg);
       color: var(--text);
       font-size: 0.9rem;
       box-sizing: border-box;
     }
+    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
-    input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent);
+    .semester-header {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    @media (min-width: 860px) {
+      .semester-header { grid-template-columns: 1fr auto; align-items: center; }
     }
 
-    .semester-subjects { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    .settings-card {
+      background: var(--card-soft);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .settings-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      color: var(--text-soft);
+      font-size: 0.85rem;
+    }
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+    .toggle input { width: auto; }
+
+    .semester-subjects { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
 
     .subject-card {
       background: var(--card-soft);
       border-radius: 12px;
       padding: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .subject-header {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+    @media (min-width: 760px) {
+      .subject-header { grid-template-columns: 1fr 160px auto; }
+    }
+    .subject-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th, td {
+      border-bottom: 1px solid #2a2a2a;
+      padding: 6px 4px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--text-soft); font-weight: 600; }
+    .nowrap { white-space: nowrap; }
+    .muted { color: var(--text-soft); }
+
+    .percent-wrapper { display: flex; align-items: center; gap: 6px; }
+    .percent-wrapper span {
+      padding: 3px 6px;
+      background: #333;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      white-space: nowrap;
     }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    th, td { border-bottom: 1px solid #2a2a2a; padding: 3px; text-align: left; color: var(--text); }
-    .note-label { font-weight: 600; white-space: nowrap; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      border: 1px solid #2a2a2a;
+      background: #101010;
+      color: var(--text-soft);
+    }
 
-    .percent-wrapper { display: flex; align-items: center; gap: 4px; }
-    .percent-wrapper span { padding: 3px 6px; background: #333; border-radius: 4px; font-size: 0.75rem; color: var(--text-soft); }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; margin-left: 8px; }
+    .tag-ok { background: var(--ok-bg); color: var(--ok-text); }
+    .tag-bad { background: var(--bad-bg); color: var(--bad-text); }
+    .tag-warn { background: var(--warn-bg); color: var(--warn-text); }
 
-    .subject-footer { font-size: 0.8rem; color: var(--text-soft); }
-    .subject-average { font-weight: bold; font-size: 0.85rem; }
+    .subject-footer { font-size: 0.85rem; color: var(--text-soft); line-height: 1.3; }
+    .subject-average { font-weight: 800; color: var(--text); }
 
-    .semester-footer { margin-top: 6px; padding-top: 6px; border-top: 1px solid #272727; font-size: 0.9rem; color: var(--text-soft); }
-    .semester-average { font-weight: bold; font-size: 0.95rem; }
-
-    .tag { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 0.7rem; margin-left: 5px; }
-    .tag-ok { background: var(--tag-ok-bg); color: var(--tag-ok-text); }
-    .tag-bad { background: var(--tag-bad-bg); color: var(--tag-bad-text); }
+    .semester-footer {
+      margin-top: 6px;
+      padding-top: 10px;
+      border-top: 1px solid #272727;
+      font-size: 0.95rem;
+      color: var(--text-soft);
+      line-height: 1.35;
+    }
+    .semester-average { font-weight: 900; color: var(--text); }
 
     .global-box {
-      margin-top: 20px;
+      margin-top: 16px;
       padding: 14px;
       border-radius: 12px;
       background: #111827;
       border: 1px solid #1e293b;
       font-size: 0.95rem;
+      line-height: 1.35;
     }
-    .global-main { font-size: 1.4rem; font-weight: bold; color: var(--text); }
+    .global-main { font-size: 1.4rem; font-weight: 900; color: var(--text); margin-top: 4px; }
 
     .empty-msg { font-size: 0.9rem; color: var(--text-soft); text-align: center; margin-top: 10px; }
+
+    details {
+      background: #121212;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-top: 8px;
+    }
+    details > summary {
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 650;
+      user-select: none;
+      list-style: none;
+    }
+    details > summary::-webkit-details-marker { display: none; }
+    .subtable { margin-top: 8px; }
+    .hint { color: var(--text-soft); font-size: 0.78rem; line-height: 1.3; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: rgba(20, 20, 20, 0.95);
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      font-size: 0.88rem;
+      display: none;
+      max-width: 520px;
+      width: calc(100% - 32px);
+    }
   </style>
 </head>
+
 <body>
   <div class="app">
     <h1>Promedios nms</h1>
@@ -189,6 +264,11 @@
       <div class="top-bar">
         <button class="btn-primary" id="addSemesterBtn">Agregar semestre</button>
         <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
+        <button class="btn-secondary" id="exportBtn">Exportar JSON</button>
+        <label class="btn-secondary" style="display:inline-flex;align-items:center;gap:8px;">
+          Importar JSON
+          <input type="file" id="importFile" accept="application/json" style="display:none;">
+        </label>
         <button class="btn-danger" id="clearAllBtn">Borrar todo</button>
       </div>
       <div id="semesterList" class="semester-list"></div>
@@ -203,16 +283,24 @@
     </div>
 
     <div class="global-box">
-      Promedio general (usando redondeados):
+      Promedio general:
       <div class="global-main" id="globalAverage">-</div>
+      <div class="hint" style="margin-top:6px;">
+        Por defecto, el promedio general y de semestre se calcula promediando ramos por igual. Si activas “Ponderar por créditos/peso”, el sistema usa el peso del ramo.
+      </div>
     </div>
   </div>
+
+  <div id="toast" class="toast"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+    /* =========================================================
+       CONFIG / CONSTANTES
+    ========================================================= */
     const firebaseConfig = {
       apiKey: "AIzaSyAcbTdLv_uULcoIHvtrp5nfoB1Q_m-ziDc",
       authDomain: "promedios-ubb.firebaseapp.com",
@@ -222,11 +310,30 @@
       appId: "1:170154498162:web:d79694baf51cc25382caeb"
     };
 
+    // Versionado de datos (evita choques con versiones viejas)
+    const LOCAL_STORAGE_KEY = "promedios_semestres_v4";
+
+    // Guardado eficiente
+    const SAVE_DELAY_MS = 350;
+
+    // Tolerancia para validar suma de % del ramo (ej: 99.3 a 100.7 se considera OK con tol 1.0)
+    const DEFAULT_PERCENT_TOLERANCE = 1.0;
+
+    // Nota Chile
+    const GRADE_MIN = 1.0;
+    const GRADE_MAX = 7.0;
+
+    /* =========================================================
+       FIREBASE
+    ========================================================= */
     const appFB = initializeApp(firebaseConfig);
     const auth = getAuth(appFB);
     const provider = new GoogleAuthProvider();
     const db = getFirestore(appFB);
 
+    /* =========================================================
+       DOM
+    ========================================================= */
     const viewList = document.getElementById("viewList");
     const viewDetail = document.getElementById("viewDetail");
     const semesterListEl = document.getElementById("semesterList");
@@ -243,14 +350,53 @@
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    const LOCAL_STORAGE_KEY = "promedios_semestres_v2";
+    const exportBtn = document.getElementById("exportBtn");
+    const importFile = document.getElementById("importFile");
+    const toastEl = document.getElementById("toast");
+
+    /* =========================================================
+       ESTADO
+    ========================================================= */
     let currentUser = null;
-    let semestersData = [];
+    let semestersData = [];  // [{ id, name, settings:{...}, subjects:[...] }]
     let selectedSemesterIndex = null;
+
+    let saveTimer = null;
+    let renderTimer = null;
+
+    /* =========================================================
+       HELPERS
+    ========================================================= */
+    const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.style.display = "block";
+      clearTimeout(toastEl._t);
+      toastEl._t = setTimeout(() => { toastEl.style.display = "none"; }, 2200);
+    }
+
+    function clamp(v, min, max) {
+      return Math.min(Math.max(v, min), max);
+    }
+
+    function normalizeNumberInput(str) {
+      // Acepta coma decimal
+      return String(str ?? "").replace(",", ".").trim();
+    }
+
+    function parseNum(str) {
+      const v = parseFloat(normalizeNumberInput(str));
+      return Number.isFinite(v) ? v : NaN;
+    }
 
     function customRound(v) {
       const d = v - Math.floor(v);
       return d >= 0.45 ? Math.ceil(v) : Math.floor(v);
+    }
+
+    function safeFixed(v, n = 2) {
+      return Number.isFinite(v) ? v.toFixed(n) : "-";
     }
 
     function showListView() {
@@ -263,29 +409,269 @@
       viewDetail.style.display = "block";
     }
 
-    function computeSemesterAverage(sem) {
-      let c = 0, sN = 0, sR = 0;
-      for (const sub of sem.subjects || []) {
-        let tot = 0, w = 0;
-        for (const ev of sub.evaluations || []) {
-          const g = parseFloat(ev.grade);
-          const p = parseFloat(ev.percent);
-          if (!isNaN(g) && !isNaN(p)) { tot += p; w += g * p; }
-        }
-        if (tot > 0) {
-          const avg = w / tot;
-          c++; sN += avg; sR += customRound(avg);
-        }
-      }
-      if (!c) return null;
-      return { normal: sN / c, rounded: sR / c };
+    function scheduleSave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => void saveData(), SAVE_DELAY_MS);
     }
 
+    function scheduleLightRender() {
+      // Evita repintar la lista/global en cada tecla
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(() => {
+        renderSemesterList();
+        renderGlobalAverage();
+      }, 180);
+    }
+
+    /* =========================================================
+       MODELO DE DATOS (FACTORIES)
+    ========================================================= */
+    function makeEmptySubEvaluation() {
+      return { name: "", grade: "", percent: "" };
+    }
+
+    function makeEmptyEvaluation() {
+      return {
+        name: "",
+        grade: "",
+        percent: "",
+        useSubs: false,
+        subs: [ makeEmptySubEvaluation() ]
+      };
+    }
+
+    function makeEmptySubject() {
+      return {
+        name: "",
+        weight: "", // opcional (créditos/peso)
+        evaluations: [ makeEmptyEvaluation() ]
+      };
+    }
+
+    function makeEmptySemester() {
+      return {
+        id: uid(),
+        name: "",
+        settings: {
+          useSubjectWeights: false,        // opcional: ponderar por créditos/peso
+          percentTolerance: DEFAULT_PERCENT_TOLERANCE
+        },
+        subjects: [ makeEmptySubject() ]
+      };
+    }
+
+    /* =========================================================
+       CÁLCULO (incluye sub-evaluaciones)
+    ========================================================= */
+    function computeEvaluationGrade(evaluation) {
+      // Si NO usa sub-evaluaciones: retorna grade directo
+      if (!evaluation?.useSubs) {
+        const g = parseNum(evaluation?.grade);
+        return Number.isFinite(g) ? clamp(g, GRADE_MIN, GRADE_MAX) : NaN;
+      }
+
+      // Si usa sub-evaluaciones: promedio ponderado interno por % sub
+      let tot = 0;
+      let w = 0;
+      for (const sub of (evaluation.subs || [])) {
+        const g = parseNum(sub.grade);
+        const p = parseNum(sub.percent);
+        if (Number.isFinite(g) && Number.isFinite(p)) {
+          const gg = clamp(g, GRADE_MIN, GRADE_MAX);
+          const pp = clamp(p, 0, 100);
+          tot += pp;
+          w += gg * pp;
+        }
+      }
+      if (!(tot > 0)) return NaN;
+      return w / tot;
+    }
+
+    function computeSubject(subject) {
+      // Retorna { avg, roundedInt, sumPercent, isPercentOk, details }
+      let tot = 0;
+      let w = 0;
+
+      for (const ev of (subject.evaluations || [])) {
+        const p = parseNum(ev.percent);
+        const evGrade = computeEvaluationGrade(ev);
+        if (Number.isFinite(p) && Number.isFinite(evGrade)) {
+          const pp = clamp(p, 0, 100);
+          tot += pp;
+          w += evGrade * pp;
+        }
+      }
+
+      if (!(tot > 0)) {
+        return {
+          avg: null,
+          roundedInt: null,
+          sumPercent: 0,
+          isPercentOk: false
+        };
+      }
+
+      const avg = w / tot;
+      const roundedInt = customRound(avg);
+      return {
+        avg,
+        roundedInt,
+        sumPercent: tot,
+        isPercentOk: true // validación depende de settings del semestre (tolerancia)
+      };
+    }
+
+    function computeSemester(semester) {
+      const settings = semester?.settings || {};
+      const useWeights = !!settings.useSubjectWeights;
+
+      let c = 0;
+      let sumNormal = 0;
+      let sumRounded = 0;
+
+      let sumWeight = 0;
+      let sumNormalW = 0;
+      let sumRoundedW = 0;
+
+      for (const sub of (semester.subjects || [])) {
+        const res = computeSubject(sub);
+        if (res.avg !== null) {
+          c++;
+          sumNormal += res.avg;
+          sumRounded += res.roundedInt;
+
+          const w = parseNum(sub.weight);
+          const ww = (useWeights && Number.isFinite(w) && w > 0) ? w : 1;
+          sumWeight += ww;
+          sumNormalW += res.avg * ww;
+          sumRoundedW += res.roundedInt * ww;
+        }
+      }
+
+      if (!c) return null;
+
+      const normal = useWeights ? (sumNormalW / sumWeight) : (sumNormal / c);
+      const rounded = useWeights ? (sumRoundedW / sumWeight) : (sumRounded / c);
+
+      return { normal, rounded };
+    }
+
+    function computeGlobal(semesters) {
+      // Promedio de ramos (con opción ponderación por ramo según settings de cada semestre)
+      let count = 0;
+      let sumN = 0;
+      let sumR = 0;
+
+      let sumNW = 0;
+      let sumRW = 0;
+      let sumW = 0;
+
+      for (const sem of (semesters || [])) {
+        const useWeights = !!sem?.settings?.useSubjectWeights;
+
+        for (const sub of (sem.subjects || [])) {
+          const res = computeSubject(sub);
+          if (res.avg !== null) {
+            count++;
+            sumN += res.avg;
+            sumR += res.roundedInt;
+
+            const w = parseNum(sub.weight);
+            const ww = (useWeights && Number.isFinite(w) && w > 0) ? w : 1;
+            sumW += ww;
+            sumNW += res.avg * ww;
+            sumRW += res.roundedInt * ww;
+          }
+        }
+      }
+
+      if (!count) return null;
+
+      // Nota: global ponderado mezcla pesos solo si el ramo trae peso y semestre lo usa.
+      // Esto es consistente: cada ramo se pondera por su peso cuando el semestre lo habilita.
+      const normal = (sumW > 0) ? (sumNW / sumW) : (sumN / count);
+      const rounded = (sumW > 0) ? (sumRW / sumW) : (sumR / count);
+      return { normal, rounded };
+    }
+
+    /* =========================================================
+       STORAGE / SYNC (local + firestore con resolución por timestamp)
+    ========================================================= */
+    function loadFromLocal() {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (!raw) return { semesters: [], updatedAtLocal: 0 };
+        const parsed = JSON.parse(raw);
+        return {
+          semesters: Array.isArray(parsed.semesters) ? parsed.semesters : [],
+          updatedAtLocal: Number.isFinite(parsed.updatedAtLocal) ? parsed.updatedAtLocal : 0
+        };
+      } catch {
+        return { semesters: [], updatedAtLocal: 0 };
+      }
+    }
+
+    async function loadFromRemote(user) {
+      try {
+        const ref = doc(db, "promedios_semestres", user.uid);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return null;
+        const data = snap.data();
+        return {
+          semesters: Array.isArray(data.semesters) ? data.semesters : [],
+          updatedAtLocalRemote: data.updatedAtLocal || 0,
+          updatedAtRemoteMs: data.updatedAt?.toMillis?.() || 0
+        };
+      } catch (e) {
+        console.error("Error Firestore load:", e);
+        return null;
+      }
+    }
+
+    async function saveData() {
+      const payload = {
+        semesters: semestersData,
+        updatedAtLocal: Date.now()
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+
+      if (!currentUser) return;
+
+      try {
+        const ref = doc(db, "promedios_semestres", currentUser.uid);
+        await setDoc(ref, {
+          semesters: semestersData,
+          updatedAtLocal: payload.updatedAtLocal,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Error Firestore save:", e);
+        showToast("No se pudo sincronizar (Firestore). Quedó guardado local.");
+      }
+    }
+
+    async function hardClearRemote() {
+      if (!currentUser) return;
+      try {
+        const ref = doc(db, "promedios_semestres", currentUser.uid);
+        await setDoc(ref, {
+          semesters: [],
+          updatedAtLocal: Date.now(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Error limpiando Firestore:", e);
+      }
+    }
+
+    /* =========================================================
+       RENDER: LISTA DE SEMESTRES
+    ========================================================= */
     function renderSemesterList() {
       semesterListEl.innerHTML = "";
+
       if (!semestersData.length) {
-        semesterListEl.innerHTML =
-          `<p class="empty-msg">No hay semestres. Agrega uno.</p>`;
+        semesterListEl.innerHTML = `<p class="empty-msg">No hay semestres. Agrega uno.</p>`;
         return;
       }
 
@@ -293,24 +679,42 @@
         const card = document.createElement("div");
         card.className = "semester-list-card";
 
+        const main = document.createElement("div");
+        main.className = "semester-list-main";
+
         const name = document.createElement("div");
         name.className = "semester-list-name";
-        name.textContent = sem.name || `Semestre ${idx + 1}`;
+        name.textContent = sem.name?.trim() ? sem.name : `Semestre ${idx + 1}`;
 
         const avgInfo = document.createElement("div");
         avgInfo.className = "semester-list-average";
-
-        const avg = computeSemesterAverage(sem);
-        if (avg)
-          avgInfo.innerHTML = `Normal: ${avg.normal.toFixed(2)} · Redondeado: <strong>${avg.rounded.toFixed(2)}</strong>`;
-        else
+        const semAvg = computeSemester(sem);
+        if (semAvg) {
+          avgInfo.innerHTML = `Normal: ${safeFixed(semAvg.normal, 2)} · Redondeado: <strong>${safeFixed(semAvg.rounded, 2)}</strong>`;
+        } else {
           avgInfo.textContent = "Sin datos";
+        }
+
+        const flags = document.createElement("div");
+        flags.style.display = "flex";
+        flags.style.gap = "8px";
+        flags.style.flexWrap = "wrap";
+        flags.style.marginTop = "4px";
+
+        if (sem?.settings?.useSubjectWeights) {
+          const pill = document.createElement("span");
+          pill.className = "pill";
+          pill.textContent = "Pondera por créditos";
+          flags.append(pill);
+        }
+
+        main.append(name, avgInfo, flags);
 
         const actions = document.createElement("div");
         actions.className = "semester-list-actions";
 
         const open = document.createElement("button");
-        open.className = "btn-primary";
+        open.className = "btn-primary btn-mini";
         open.textContent = "Abrir";
         open.onclick = () => {
           selectedSemesterIndex = idx;
@@ -319,32 +723,118 @@
         };
 
         const del = document.createElement("button");
-        del.className = "btn-danger";
+        del.className = "btn-danger btn-mini";
         del.textContent = "Eliminar";
         del.onclick = () => {
           if (!confirm("¿Eliminar semestre?")) return;
           semestersData.splice(idx, 1);
-          saveData();
+          scheduleSave();
           renderSemesterList();
           renderGlobalAverage();
+          showToast("Semestre eliminado.");
         };
 
         actions.append(open, del);
-        const main = document.createElement("div");
-        main.append(name, avgInfo);
-
         card.append(main, actions);
         semesterListEl.append(card);
       });
     }
 
-    function updateNoteLabels(card) {
-      card.querySelectorAll("tbody tr").forEach((tr, i) => {
-        tr.querySelector(".note-label").textContent = "Nota " + (i + 1);
-      });
+    /* =========================================================
+       RENDER: DETALLE (SEMESTRE)
+    ========================================================= */
+    function renderSemesterDetail() {
+      semesterDetailEl.innerHTML = "";
+      const sem = semestersData[selectedSemesterIndex];
+      if (!sem) return;
+
+      // Normaliza settings faltantes
+      sem.settings = sem.settings || { useSubjectWeights: false, percentTolerance: DEFAULT_PERCENT_TOLERANCE };
+      if (typeof sem.settings.useSubjectWeights !== "boolean") sem.settings.useSubjectWeights = false;
+      if (!Number.isFinite(sem.settings.percentTolerance)) sem.settings.percentTolerance = DEFAULT_PERCENT_TOLERANCE;
+
+      const card = document.createElement("div");
+      card.className = "semester-card";
+
+      const header = document.createElement("div");
+      header.className = "semester-header";
+
+      const semName = document.createElement("input");
+      semName.placeholder = "Nombre semestre (Ej: 2025-1)";
+      semName.value = sem.name || "";
+      semName.oninput = () => syncDetailToData();
+
+      header.append(semName);
+
+      // Settings
+      const settings = document.createElement("div");
+      settings.className = "settings-card";
+
+      const row1 = document.createElement("div");
+      row1.className = "settings-row";
+
+      const togW = document.createElement("label");
+      togW.className = "toggle";
+      const cbW = document.createElement("input");
+      cbW.type = "checkbox";
+      cbW.checked = !!sem.settings.useSubjectWeights;
+      cbW.onchange = () => syncDetailToData();
+      const spanW = document.createElement("span");
+      spanW.textContent = "Ponderar por créditos/peso (opcional)";
+      togW.append(cbW, spanW);
+
+      const tolWrap = document.createElement("label");
+      tolWrap.className = "toggle";
+      tolWrap.style.gap = "10px";
+      const tolText = document.createElement("span");
+      tolText.textContent = "Tolerancia % (±)";
+      const tol = document.createElement("input");
+      tol.type = "number";
+      tol.step = "0.1";
+      tol.min = "0";
+      tol.max = "10";
+      tol.value = String(sem.settings.percentTolerance ?? DEFAULT_PERCENT_TOLERANCE);
+      tol.style.width = "90px";
+      tol.oninput = () => syncDetailToData();
+      tolWrap.append(tolText, tol);
+
+      row1.append(togW, tolWrap);
+
+      const row2 = document.createElement("div");
+      row2.className = "settings-row";
+      row2.innerHTML = `
+        <span class="hint">
+          Sub-evaluaciones: puedes dividir una evaluación (por ejemplo un 30%) en partes internas (test 1, test 2, etc.).
+          Es opcional. Si no la divides, funciona como nota normal.
+        </span>
+      `;
+
+      settings.append(row1, row2);
+
+      const subs = document.createElement("div");
+      subs.className = "semester-subjects";
+
+      (sem.subjects || []).forEach(s => createSubjectCardDOM(subs, s));
+
+      const addSubjectBtn = document.createElement("button");
+      addSubjectBtn.className = "btn-primary";
+      addSubjectBtn.textContent = "Agregar asignatura";
+      addSubjectBtn.onclick = () => {
+        createSubjectCardDOM(subs, makeEmptySubject());
+        syncDetailToData();
+      };
+
+      const footer = document.createElement("div");
+      footer.className = "semester-footer";
+      footer.innerHTML = `Promedio semestre: <span class="semester-average">-</span>`;
+
+      card.append(header, settings, subs, addSubjectBtn, footer);
+      semesterDetailEl.append(card);
+
+      syncDetailToData(true);
     }
 
-    function createSubjectCardDOM(parent, data = {}) {
+    function createSubjectCardDOM(parent, data) {
       const card = document.createElement("div");
       card.className = "subject-card";
 
@@ -352,81 +842,59 @@
       header.className = "subject-header";
 
       const name = document.createElement("input");
+      name.type = "text";
       name.placeholder = "Nombre asignatura";
-      name.value = data.name || "";
-      name.oninput = syncDetailToData;
+      name.value = data?.name || "";
+      name.oninput = () => syncDetailToData();
 
-      const del = document.createElement("button");
-      del.className = "btn-danger";
-      del.style.fontSize = "0.7rem";
-      del.textContent = "Eliminar ramo";
-      del.onclick = () => {
+      const weight = document.createElement("input");
+      weight.type = "number";
+      weight.step = "0.5";
+      weight.min = "0";
+      weight.placeholder = "Créditos/peso (opcional)";
+      weight.value = data?.weight ?? "";
+      weight.oninput = () => syncDetailToData();
+
+      const actions = document.createElement("div");
+      actions.className = "subject-actions";
+
+      const addEvalBtn = document.createElement("button");
+      addEvalBtn.className = "btn-secondary btn-mini";
+      addEvalBtn.textContent = "Agregar evaluación";
+      addEvalBtn.onclick = () => {
+        addEvaluationRow(tbody, makeEmptyEvaluation());
+        syncDetailToData();
+      };
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn-danger btn-mini";
+      delBtn.textContent = "Eliminar ramo";
+      delBtn.onclick = () => {
+        if (!confirm("¿Eliminar ramo?")) return;
         card.remove();
         syncDetailToData();
       };
 
-      header.append(name, del);
+      actions.append(addEvalBtn, delBtn);
+      header.append(name, weight, actions);
 
       const table = document.createElement("table");
       table.innerHTML = `
-        <thead><tr><th></th><th>Nota</th><th>%</th><th></th></tr></thead>
+        <thead>
+          <tr>
+            <th style="width: 34%;">Evaluación</th>
+            <th class="nowrap" style="width: 18%;">Nota</th>
+            <th class="nowrap" style="width: 18%;">%</th>
+            <th class="nowrap" style="width: 12%;">Dividir</th>
+            <th class="nowrap" style="width: 18%;">Acciones</th>
+          </tr>
+        </thead>
       `;
       const tbody = document.createElement("tbody");
       table.append(tbody);
 
-      function addEval(row = {}) {
-        const tr = document.createElement("tr");
-
-        const tdL = document.createElement("td");
-        tdL.className = "note-label";
-
-        const tdG = document.createElement("td");
-        const g = document.createElement("input");
-        g.type = "number"; g.step = "0.1"; g.min = "1"; g.max = "7";
-        g.placeholder = "Nota"; g.value = row.grade || "";
-        g.oninput = syncDetailToData;
-        tdG.append(g);
-
-        const tdP = document.createElement("td");
-        const wrap = document.createElement("div");
-        wrap.className = "percent-wrapper";
-        const p = document.createElement("input");
-        p.type = "number"; p.step = "0.1"; p.placeholder = "%";
-        p.value = row.percent || "";
-        p.oninput = syncDetailToData;
-
-        const pr = document.createElement("span");
-        pr.textContent = "%";
-        wrap.append(p, pr);
-        tdP.append(wrap);
-
-        const tdA = document.createElement("td");
-        const b = document.createElement("button");
-        b.className = "btn-danger";
-        b.style.fontSize = "0.7rem";
-        b.textContent = "X";
-        b.onclick = () => {
-          tr.remove();
-          updateNoteLabels(card);
-          syncDetailToData();
-        };
-        tdA.append(b);
-
-        tr.append(tdL, tdG, tdP, tdA);
-        tbody.append(tr);
-        updateNoteLabels(card);
-      }
-
-      if (data.evaluations?.length)
-        data.evaluations.forEach(e => addEval(e));
-      else
-        addEval();
-
-      const addBtn = document.createElement("button");
-      addBtn.className = "btn-secondary";
-      addBtn.style.fontSize = "0.75rem";
-      addBtn.textContent = "Agregar nota";
-      addBtn.onclick = () => { addEval(); syncDetailToData(); };
+      const evals = Array.isArray(data?.evaluations) && data.evaluations.length ? data.evaluations : [makeEmptyEvaluation()];
+      evals.forEach(ev => addEvaluationRow(tbody, ev));
 
       const footer = document.createElement("div");
       footer.className = "subject-footer";
@@ -437,249 +905,466 @@
         <span class="subject-tag tag"></span>
       `;
 
-      card.append(header, table, addBtn, footer);
+      card.append(header, table, footer);
       parent.append(card);
     }
 
-    function renderSemesterDetail() {
-      semesterDetailEl.innerHTML = "";
-      const sem = semestersData[selectedSemesterIndex];
-      if (!sem) return;
+    function addEvaluationRow(tbody, evData) {
+      const tr = document.createElement("tr");
 
-      const card = document.createElement("div");
-      card.className = "semester-card";
+      // Nombre evaluación
+      const tdName = document.createElement("td");
+      const evName = document.createElement("input");
+      evName.type = "text";
+      evName.placeholder = "Ej: Controles / Certamen 1";
+      evName.value = evData?.name || "";
+      evName.oninput = () => syncDetailToData();
+      tdName.append(evName);
 
-      const header = document.createElement("div");
-      header.className = "semester-header";
+      // Nota
+      const tdGrade = document.createElement("td");
+      const grade = document.createElement("input");
+      grade.type = "text"; // para permitir coma
+      grade.inputMode = "decimal";
+      grade.placeholder = "Ej: 5,5";
+      grade.value = evData?.grade ?? "";
+      grade.oninput = () => syncDetailToData();
+      tdGrade.append(grade);
 
-      const name = document.createElement("input");
-      name.placeholder = "Nombre semestre (Ej: 2025-1)";
-      name.value = sem.name || "";
-      name.oninput = syncDetailToData;
+      // %
+      const tdPercent = document.createElement("td");
+      const wrap = document.createElement("div");
+      wrap.className = "percent-wrapper";
+      const percent = document.createElement("input");
+      percent.type = "text"; // para permitir coma
+      percent.inputMode = "decimal";
+      percent.placeholder = "Ej: 30";
+      percent.value = evData?.percent ?? "";
+      percent.oninput = () => syncDetailToData();
+      const pct = document.createElement("span");
+      pct.textContent = "%";
+      wrap.append(percent, pct);
+      tdPercent.append(wrap);
 
-      header.append(name);
+      // Dividir checkbox
+      const tdSplit = document.createElement("td");
+      const splitWrap = document.createElement("div");
+      splitWrap.style.display = "flex";
+      splitWrap.style.alignItems = "center";
+      splitWrap.style.gap = "8px";
 
-      const subs = document.createElement("div");
-      subs.className = "semester-subjects";
+      const split = document.createElement("input");
+      split.type = "checkbox";
+      split.checked = !!evData?.useSubs;
+      split.onchange = () => {
+        // Si activas subs, puedes dejar nota vacía (se calculará con subs).
+        // Si desactivas subs, se conserva nota actual (si existe) y se ignoran subs.
+        details.open = split.checked;
+        syncDetailToData();
+      };
 
-      (sem.subjects || []).forEach(s => createSubjectCardDOM(subs, s));
-      if (!sem.subjects?.length) createSubjectCardDOM(subs);
+      const splitLbl = document.createElement("span");
+      splitLbl.className = "muted";
+      splitLbl.textContent = "Sí";
 
-      const add = document.createElement("button");
-      add.className = "btn-primary";
-      add.style.fontSize = "0.8rem";
-      add.textContent = "Agregar asignatura";
-      add.onclick = () => { createSubjectCardDOM(subs); syncDetailToData(); };
+      splitWrap.append(split, splitLbl);
+      tdSplit.append(splitWrap);
 
-      const footer = document.createElement("div");
-      footer.className = "semester-footer";
-      footer.innerHTML = `Promedio semestre: <span class="semester-average">-</span>`;
+      // Acciones
+      const tdAct = document.createElement("td");
+      const actWrap = document.createElement("div");
+      actWrap.style.display = "flex";
+      actWrap.style.gap = "6px";
+      actWrap.style.flexWrap = "wrap";
 
-      card.append(header, subs, add, footer);
-      semesterDetailEl.append(card);
+      const del = document.createElement("button");
+      del.className = "btn-danger btn-mini";
+      del.textContent = "Eliminar";
+      del.onclick = () => {
+        if (!confirm("¿Eliminar evaluación?")) return;
+        tr.remove();
+        syncDetailToData();
+      };
 
-      syncDetailToData();
-    }
+      const addSubQuick = document.createElement("button");
+      addSubQuick.className = "btn-secondary btn-mini";
+      addSubQuick.textContent = "Agregar sub";
+      addSubQuick.onclick = () => {
+        split.checked = true;
+        details.open = true;
+        addSubRow(subTbody, makeEmptySubEvaluation());
+        syncDetailToData();
+      };
 
-    function renderGlobalAverage() {
-      let c = 0, sN = 0, sR = 0;
+      actWrap.append(addSubQuick, del);
+      tdAct.append(actWrap);
 
-      semestersData.forEach(sem => {
-        sem.subjects?.forEach(sub => {
-          let tot = 0, w = 0;
-          sub.evaluations?.forEach(ev => {
-            const g = parseFloat(ev.grade);
-            const p = parseFloat(ev.percent);
-            if (!isNaN(g) && !isNaN(p)) { tot += p; w += g * p; }
-          });
-          if (tot > 0) {
-            const avg = w / tot;
-            const r = customRound(avg);
-            c++; sN += avg; sR += r;
-          }
-        });
+      // Sub-evaluaciones (details)
+      const detailsRow = document.createElement("tr");
+      const detailsTd = document.createElement("td");
+      detailsTd.colSpan = 5;
+
+      const details = document.createElement("details");
+      details.open = !!evData?.useSubs;
+
+      const summary = document.createElement("summary");
+      summary.textContent = "Sub-evaluaciones (opcional)";
+
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      hint.style.marginTop = "6px";
+      hint.textContent = "Ejemplo: si esta evaluación pesa 30% del ramo, puedes dividirla en 4 tests internos con su % interno (30/25/25/20) y sus notas.";
+
+      const subTable = document.createElement("table");
+      subTable.className = "subtable";
+      subTable.innerHTML = `
+        <thead>
+          <tr>
+            <th style="width: 40%;">Nombre</th>
+            <th style="width: 25%;">Nota</th>
+            <th style="width: 25%;">% interno</th>
+            <th style="width: 10%;">Acción</th>
+          </tr>
+        </thead>
+      `;
+      const subTbody = document.createElement("tbody");
+      subTable.append(subTbody);
+
+      const subs = Array.isArray(evData?.subs) && evData.subs.length ? evData.subs : [makeEmptySubEvaluation()];
+      subs.forEach(s => addSubRow(subTbody, s));
+
+      const subButtons = document.createElement("div");
+      subButtons.style.display = "flex";
+      subButtons.style.gap = "8px";
+      subButtons.style.flexWrap = "wrap";
+      subButtons.style.marginTop = "8px";
+
+      const addSub = document.createElement("button");
+      addSub.className = "btn-secondary btn-mini";
+      addSub.textContent = "Agregar sub-evaluación";
+      addSub.onclick = () => {
+        split.checked = true;
+        details.open = true;
+        addSubRow(subTbody, makeEmptySubEvaluation());
+        syncDetailToData();
+      };
+
+      const clearSubs = document.createElement("button");
+      clearSubs.className = "btn-danger btn-mini";
+      clearSubs.textContent = "Borrar subs";
+      clearSubs.onclick = () => {
+        if (!confirm("¿Borrar todas las sub-evaluaciones?")) return;
+        subTbody.innerHTML = "";
+        addSubRow(subTbody, makeEmptySubEvaluation());
+        split.checked = true;
+        details.open = true;
+        syncDetailToData();
+      };
+
+      subButtons.append(addSub, clearSubs);
+
+      details.append(summary, hint, subTable, subButtons);
+      detailsTd.append(details);
+      detailsRow.append(detailsTd);
+
+      // Si el usuario cierra details manualmente, no forzamos; “useSubs” lo define el checkbox.
+      details.addEventListener("toggle", () => {
+        // Nada obligatorio: solo UI.
       });
 
-      if (!c)
-        globalAverageEl.textContent = "-";
-      else
-        globalAverageEl.innerHTML =
-          `Normal: ${(sN / c).toFixed(2)}<br>Con redondeados: <strong>${(sR / c).toFixed(2)}</strong>`;
+      tr.append(tdName, tdGrade, tdPercent, tdSplit, tdAct);
+      tbody.append(tr, detailsRow);
+
+      // Estado inicial: si no está dividido, colapsa el details
+      if (!split.checked) details.open = false;
     }
 
-    async function saveData() {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(semestersData));
-      console.log("Guardado localStorage");
+    function addSubRow(subTbody, subData) {
+      const tr = document.createElement("tr");
 
-      if (currentUser) {
-        try {
-          const ref = doc(db, "promedios_semestres", currentUser.uid);
-          await setDoc(ref, {
-            semesters: semestersData,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-          console.log("Guardado en Firestore para", currentUser.uid);
-        } catch (e) {
-          console.error("Error guardando en Firestore:", e);
+      const tdN = document.createElement("td");
+      const n = document.createElement("input");
+      n.type = "text";
+      n.placeholder = "Ej: Test 1";
+      n.value = subData?.name ?? "";
+      n.oninput = () => syncDetailToData();
+      tdN.append(n);
+
+      const tdG = document.createElement("td");
+      const g = document.createElement("input");
+      g.type = "text";
+      g.inputMode = "decimal";
+      g.placeholder = "Ej: 6,0";
+      g.value = subData?.grade ?? "";
+      g.oninput = () => syncDetailToData();
+      tdG.append(g);
+
+      const tdP = document.createElement("td");
+      const wrap = document.createElement("div");
+      wrap.className = "percent-wrapper";
+      const p = document.createElement("input");
+      p.type = "text";
+      p.inputMode = "decimal";
+      p.placeholder = "Ej: 25";
+      p.value = subData?.percent ?? "";
+      p.oninput = () => syncDetailToData();
+      const pct = document.createElement("span");
+      pct.textContent = "%";
+      wrap.append(p, pct);
+      tdP.append(wrap);
+
+      const tdA = document.createElement("td");
+      const del = document.createElement("button");
+      del.className = "btn-danger btn-mini";
+      del.textContent = "X";
+      del.onclick = () => {
+        tr.remove();
+        syncDetailToData();
+      };
+      tdA.append(del);
+
+      tr.append(tdN, tdG, tdP, tdA);
+      subTbody.append(tr);
+    }
+
+    /* =========================================================
+       SYNC UI -> DATA + CALC UI (instantáneo) + SAVE (debounced)
+    ========================================================= */
+    function syncDetailToData(initial = false) {
+      if (selectedSemesterIndex === null) return;
+      const sem = semestersData[selectedSemesterIndex];
+      const root = semesterDetailEl.querySelector(".semester-card");
+      if (!root || !sem) return;
+
+      // Sem name
+      const semNameInput = root.querySelector(".semester-header input");
+      sem.name = semNameInput.value;
+
+      // Settings
+      const settingsCard = root.querySelector(".settings-card");
+      const useWeights = settingsCard.querySelector('input[type="checkbox"]').checked;
+      const tolInput = settingsCard.querySelector('input[type="number"]');
+      const tol = parseNum(tolInput.value);
+
+      sem.settings = sem.settings || {};
+      sem.settings.useSubjectWeights = !!useWeights;
+      sem.settings.percentTolerance = Number.isFinite(tol) ? clamp(tol, 0, 10) : DEFAULT_PERCENT_TOLERANCE;
+
+      // Subjects
+      const subjectCards = Array.from(root.querySelectorAll(".subject-card"));
+      const subjects = [];
+
+      for (const sc of subjectCards) {
+        const inputs = sc.querySelectorAll(".subject-header input");
+        const subName = inputs[0].value;
+        const subWeight = inputs[1].value; // string
+
+        const sub = {
+          name: subName,
+          weight: subWeight,
+          evaluations: []
+        };
+
+        // Evaluations rows: cada evaluación ocupa 2 filas (principal + details)
+        // Tomamos las filas principales por seleccionar las que tienen 5 celdas y NO colSpan.
+        const rows = Array.from(sc.querySelectorAll("tbody > tr"));
+
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          // Fila principal: 5 tds y el siguiente row tiene colSpan
+          const tds = r.querySelectorAll("td");
+          if (tds.length === 5) {
+            const evName = tds[0].querySelector("input")?.value ?? "";
+            const evGrade = tds[1].querySelector("input")?.value ?? "";
+            const evPercent = tds[2].querySelector("input")?.value ?? "";
+            const evUseSubs = tds[3].querySelector('input[type="checkbox"]')?.checked ?? false;
+
+            // details row siguiente
+            const detailsRow = rows[i + 1];
+            let subs = [];
+            if (detailsRow) {
+              const subRows = Array.from(detailsRow.querySelectorAll("table.subtable tbody tr"));
+              subs = subRows.map(sr => {
+                const sInputs = sr.querySelectorAll("input");
+                return {
+                  name: sInputs[0]?.value ?? "",
+                  grade: sInputs[1]?.value ?? "",
+                  percent: sInputs[2]?.value ?? ""
+                };
+              });
+            }
+
+            sub.evaluations.push({
+              name: evName,
+              grade: evGrade,
+              percent: evPercent,
+              useSubs: !!evUseSubs,
+              subs: subs.length ? subs : [ makeEmptySubEvaluation() ]
+            });
+
+            i++; // saltar detailsRow
+          }
         }
+
+        subjects.push(sub);
+
+        // Actualizar UI: promedio del ramo, suma %, tag OK/No suma, + preview de evaluación dividida
+        const tolHere = sem.settings.percentTolerance;
+
+        const res = computeSubject(sub);
+        const avgEl = sc.querySelector(".subject-average");
+        const sumEl = sc.querySelector(".subject-weight");
+        const tagEl = sc.querySelector(".subject-tag");
+
+        // Validación suma %
+        const sumP = res.sumPercent || 0;
+        sumEl.textContent = `${safeFixed(sumP, 1)}%`;
+
+        if (res.avg === null) {
+          avgEl.textContent = "-";
+          tagEl.textContent = "";
+          tagEl.className = "subject-tag tag";
+        } else {
+          // promedio
+          avgEl.innerHTML = `Normal: ${safeFixed(res.avg, 2)}<br>Redondeado: <strong>${res.roundedInt}</strong>`;
+
+          // tag suma %
+          const ok = Math.abs(sumP - 100) <= tolHere;
+          if (ok) {
+            tagEl.textContent = "OK";
+            tagEl.className = "subject-tag tag tag-ok";
+          } else {
+            tagEl.textContent = "No suma 100%";
+            tagEl.className = "subject-tag tag tag-bad";
+          }
+        }
+      }
+
+      sem.subjects = subjects;
+
+      // Promedio semestre (UI)
+      const semAvg = computeSemester(sem);
+      const semAvgEl = root.querySelector(".semester-average");
+      if (semAvg) {
+        semAvgEl.innerHTML = `Normal: ${safeFixed(semAvg.normal, 2)}<br>Con redondeados: <strong>${safeFixed(semAvg.rounded, 2)}</strong>`;
       } else {
-        console.log("Sin usuario logueado, solo localStorage.");
+        semAvgEl.textContent = "-";
+      }
+
+      // Guardado (debounced) y repintado liviano
+      scheduleSave();
+      scheduleLightRender();
+
+      if (!initial) {
+        // Validaciones rápidas / micro-ayudas (no bloquea)
+        // Ejemplo: si detecta coma, normaliza en el cálculo pero no sobreescribe lo que escribió el usuario.
       }
     }
 
-    function loadFromLocal() {
-      const d = localStorage.getItem(LOCAL_STORAGE_KEY);
-      semestersData = d ? JSON.parse(d) : [];
-      console.log("Cargado desde localStorage, semestres:", semestersData.length);
-      renderSemesterList();
-      renderGlobalAverage();
-    }
-
-    async function loadFromRemote(user) {
-      try {
-        const ref = doc(db, "promedios_semestres", user.uid);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          semestersData = snap.data().semesters || [];
-          console.log("Cargado desde Firestore, semestres:", semestersData.length);
-        } else {
-          const d = localStorage.getItem(LOCAL_STORAGE_KEY);
-          semestersData = d ? JSON.parse(d) : [];
-          console.log("Firestore vacío, subo datos locales:", semestersData.length);
-          await setDoc(ref, {
-            semesters: semestersData,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        }
-      } catch (e) {
-        console.error("Error cargando Firestore, uso local:", e);
-        loadFromLocal();
+    /* =========================================================
+       PROMEDIO GLOBAL
+    ========================================================= */
+    function renderGlobalAverage() {
+      const g = computeGlobal(semestersData);
+      if (!g) {
+        globalAverageEl.textContent = "-";
         return;
       }
-      renderSemesterList();
-      renderGlobalAverage();
+      globalAverageEl.innerHTML =
+        `Normal: ${safeFixed(g.normal, 2)}<br>Con redondeados: <strong>${safeFixed(g.rounded, 2)}</strong>`;
     }
 
-    function syncDetailToData() {
-      if (selectedSemesterIndex === null) return;
-      const semCard = semesterDetailEl.querySelector(".semester-card");
-      if (!semCard) return;
-
-      const semName = semCard.querySelector(".semester-header input").value;
-      const subs = [];
-
-      let c = 0, sN = 0, sR = 0;
-
-      semCard.querySelectorAll(".subject-card").forEach(sc => {
-        const name = sc.querySelector(".subject-header input").value;
-        const evals = [];
-        let tot = 0, w = 0;
-
-        sc.querySelectorAll("tbody tr").forEach(tr => {
-          const inputs = tr.querySelectorAll("input");
-          const g = parseFloat(inputs[0].value);
-          const p = parseFloat(inputs[1].value);
-          evals.push({ grade: inputs[0].value, percent: inputs[1].value });
-
-          if (!isNaN(g) && !isNaN(p)) { tot += p; w += g * p; }
-        });
-
-        const avgN = sc.querySelector(".subject-average");
-        const wN = sc.querySelector(".subject-weight");
-        const tag = sc.querySelector(".subject-tag");
-
-        if (tot > 0) {
-          const avg = w / tot;
-          const r = customRound(avg);
-          avgN.innerHTML = `Normal: ${avg.toFixed(2)}<br>Redondeado: <strong>${r}</strong>`;
-          wN.textContent = tot.toFixed(1) + "%";
-
-          if (Math.abs(tot - 100) < 1) {
-            tag.textContent = "OK"; tag.className = "subject-tag tag tag-ok";
-          } else {
-            tag.textContent = "No suma 100%"; tag.className = "subject-tag tag tag-bad";
-          }
-
-          c++; sN += avg; sR += r;
-        } else {
-          avgN.textContent = "-";
-          wN.textContent = "0%";
-          tag.textContent = "";
-        }
-
-        subs.push({ name, evaluations: evals });
-      });
-
-      const semAvgEl = semCard.querySelector(".semester-average");
-      if (c)
-        semAvgEl.innerHTML =
-          `Normal: ${(sN / c).toFixed(2)}<br>Con redondeados: <strong>${(sR / c).toFixed(2)}</strong>`;
-      else
-        semAvgEl.textContent = "-";
-
-      semestersData[selectedSemesterIndex] = { name: semName, subjects: subs };
-
-      saveData();
-      renderSemesterList();
-      renderGlobalAverage();
-    }
-
+    /* =========================================================
+       AUTH UI + LOAD SYNC
+    ========================================================= */
     loginBtn.onclick = () => {
-      signInWithPopup(auth, provider)
-        .catch(err => {
-          console.error("Error login:", err);
-          alert("No se pudo iniciar sesión con Google. Revisa si xzykzii.github.io está en Dominios autorizados.");
-        });
+      signInWithPopup(auth, provider).catch(err => {
+        console.error("Error login:", err);
+        alert("No se pudo iniciar sesión con Google. Revisa dominios autorizados en Firebase (por ejemplo xzykzii.github.io).");
+      });
     };
 
     logoutBtn.onclick = () => signOut(auth);
 
-    onAuthStateChanged(auth, async u => {
+    onAuthStateChanged(auth, async (u) => {
       currentUser = u;
+
       if (u) {
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
         userInfoEl.textContent = "Sesión Google: " + (u.displayName || u.email) + " (sincronizado)";
-        await loadFromRemote(u);
       } else {
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
         userInfoEl.textContent = "Modo local (sin sesión)";
-        loadFromLocal();
       }
-    });
 
-    addSemesterBtn.onclick = () => {
-      semestersData.push({
-        name: "",
-        subjects: [{ name: "", evaluations: [{ grade: "", percent: "" }] }]
-      });
-      saveData();
+      const local = loadFromLocal();
+
+      if (!u) {
+        semestersData = local.semesters || [];
+        renderSemesterList();
+        renderGlobalAverage();
+        showListView();
+        return;
+      }
+
+      const remote = await loadFromRemote(u);
+
+      // Resolución automática (sin preguntar): usa el más nuevo (local.updatedAtLocal vs remote.updatedAtLocalRemote vs remote.updatedAtRemoteMs)
+      const localTs = local.updatedAtLocal || 0;
+      const remoteTs = Math.max(remote?.updatedAtLocalRemote || 0, remote?.updatedAtRemoteMs || 0);
+
+      if (!remote) {
+        // Si Firestore falla o no existe, usa local.
+        semestersData = local.semesters || [];
+        await saveData(); // crea doc si no existía
+        showToast("Usando datos locales (Firestore vacío/no accesible).");
+      } else if (localTs > remoteTs) {
+        semestersData = local.semesters || [];
+        await saveData(); // sube local porque es más nuevo
+        showToast("Local era más nuevo: se subió a la nube.");
+      } else {
+        semestersData = remote.semesters || [];
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+          semesters: semestersData,
+          updatedAtLocal: Date.now()
+        }));
+        showToast("Cargado desde la nube.");
+      }
+
       renderSemesterList();
       renderGlobalAverage();
+      showListView();
+    });
+
+    /* =========================================================
+       BOTONES PRINCIPALES
+    ========================================================= */
+    addSemesterBtn.onclick = () => {
+      semestersData.push(makeEmptySemester());
+      scheduleSave();
+      renderSemesterList();
+      renderGlobalAverage();
+      showToast("Semestre agregado.");
     };
 
     recalcAllBtn.onclick = () => {
       renderSemesterList();
       renderGlobalAverage();
       if (viewDetail.style.display === "block") renderSemesterDetail();
+      showToast("Recalculado.");
     };
 
     clearAllBtn.onclick = async () => {
-      if (!confirm("¿Seguro?")) return;
+      if (!confirm("¿Seguro que quieres borrar todo?")) return;
       semestersData = [];
       localStorage.removeItem(LOCAL_STORAGE_KEY);
-      if (currentUser) {
-        try {
-          const ref = doc(db, "promedios_semestres", currentUser.uid);
-          await setDoc(ref, { semesters: [], updatedAt: serverTimestamp() }, { merge: true });
-        } catch (e) {
-          console.error("Error limpiando Firestore:", e);
-        }
-      }
+      await hardClearRemote();
       renderSemesterList();
       renderGlobalAverage();
       showListView();
+      showToast("Todo borrado.");
     };
 
     backBtn.onclick = () => {
@@ -690,17 +1375,76 @@
     deleteSemesterDetailBtn.onclick = async () => {
       if (!confirm("¿Eliminar semestre?")) return;
       semestersData.splice(selectedSemesterIndex, 1);
+      selectedSemesterIndex = null;
       await saveData();
       renderSemesterList();
       renderGlobalAverage();
       showListView();
+      showToast("Semestre eliminado.");
     };
 
-    // Carga inicial local mientras se resuelve auth
-    loadFromLocal();
+    /* =========================================================
+       EXPORT / IMPORT JSON
+    ========================================================= */
+    exportBtn.onclick = () => {
+      const payload = {
+        version: 4,
+        exportedAt: new Date().toISOString(),
+        semesters: semestersData
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "promedios_backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Exportado.");
+    };
+
+    importFile.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        const imported = Array.isArray(data.semesters) ? data.semesters : null;
+        if (!imported) {
+          alert("JSON inválido (no viene 'semesters').");
+          return;
+        }
+
+        if (!confirm("Esto reemplazará tus datos actuales. ¿Continuar?")) return;
+
+        semestersData = imported;
+        await saveData();
+        renderSemesterList();
+        renderGlobalAverage();
+        showListView();
+        showToast("Importado y guardado.");
+      } catch (err) {
+        console.error(err);
+        alert("No se pudo importar. Revisa el archivo.");
+      } finally {
+        importFile.value = "";
+      }
+    };
+
+    /* =========================================================
+       CARGA INICIAL (local mientras resuelve auth)
+    ========================================================= */
+    (function bootstrap() {
+      const local = loadFromLocal();
+      semestersData = local.semesters || [];
+      renderSemesterList();
+      renderGlobalAverage();
+      showListView();
+    })();
   </script>
 
   <script>
+    // Service Worker (PWA)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/Promedionotas/sw.js')
