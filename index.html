@@ -338,9 +338,9 @@
     ========================= */
     const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
-    // Redondeo estándar a 1 decimal: 5.46 -> 5.5
+    // ✅ Redondeo robusto a 1 decimal (corrige 5.85 -> 5.9 por floating point)
     function round1(v) {
-      return Math.round(v * 10) / 10;
+      return Math.round((v + Number.EPSILON) * 10) / 10;
     }
 
     function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
@@ -450,7 +450,7 @@
       if (!(tot > 0)) return { avg: null, rounded1: null, sumPercent: 0 };
 
       const avg = w / tot;
-      const r = round1(avg); // <-- redondeo a 1 decimal
+      const r = round1(avg); // ✅ redondeo robusto a 1 decimal
       return { avg, rounded1: r, sumPercent: tot };
     }
 
