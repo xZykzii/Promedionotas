@@ -1058,7 +1058,7 @@
             } else {
               neededVal.textContent = "—"; neededVal.style.color = ""; neededSub.textContent = "";
             }
-          } else if (needed <= 1.0 || (res.avg !== null && res.avg >= PASS_GRADE)) {
+          } else if (needed <= 1.0) {
             neededVal.textContent = "✓";
             neededVal.style.color = "var(--success)";
             neededSub.textContent = "Ya aprobado";
