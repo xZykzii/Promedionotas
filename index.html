@@ -4,267 +4,379 @@
   <meta charset="UTF-8" />
   <title>Promedios nms</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- PWA: el proyecto está en /Promedionotas/ -->
   <link rel="manifest" href="/Promedionotas/manifest.json">
-  <meta name="theme-color" content="#0f0f0f">
+  <meta name="theme-color" content="#080811">
   <link rel="icon" href="/Promedionotas/icons/icon-192.png">
 
   <style>
     :root {
-      --bg: #0f0f0f;
-      --card: #1a1a1a;
-      --card-soft: #181818;
-      --text: #e5e5e5;
-      --text-soft: #bbbbbb;
-      --input-bg: #262626;
-      --input-border: #3d3d3d;
-      --accent: #2563eb;
-      --danger: #ef4444;
-      --tag-ok-bg: #14532d;
-      --tag-ok-text: #bbf7d0;
-      --tag-bad-bg: #450a0a;
-      --tag-bad-text: #fecaca;
+      --bg: #08080f;
+      --surface: #0f0f1a;
+      --card: #111120;
+      --card-soft: #0d0d1a;
+      --border: #1c1c2e;
+      --border-light: #242436;
+      --text: #e8e8f0;
+      --text-soft: #8888aa;
+      --text-muted: #4a4a66;
+      --input-bg: #16162a;
+      --input-border: #252540;
+      --accent: #5b5bd6;
+      --accent-hover: #7070e8;
+      --accent-glow: rgba(91,91,214,0.18);
+      --danger: #e54545;
+      --danger-soft: rgba(229,69,69,0.1);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --grade-fail: #ef4444;
+      --grade-fail-bg: rgba(239,68,68,0.12);
+      --grade-warn: #f59e0b;
+      --grade-warn-bg: rgba(245,158,11,0.12);
+      --grade-lime: #84cc16;
+      --grade-lime-bg: rgba(132,204,22,0.12);
+      --grade-good: #22c55e;
+      --grade-good-bg: rgba(34,197,94,0.12);
+      --r: 14px; --rs: 8px; --rx: 6px;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); }
-    .app { max-width: 1200px; margin: 0 auto; }
-    h1 { margin-top: 0; font-size: 1.6rem; text-align: center; color: var(--text); }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 0.9rem;
-      cursor: pointer;
+    .app { max-width: 920px; margin: 0 auto; padding: 16px 16px 60px; }
+
+    /* ── Header ── */
+    .app-header { text-align: center; padding: 28px 0 18px; }
+    .app-header h1 {
+      margin: 0;
+      font-size: 1.9rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 50%, #6366f1 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
+    .app-header p { margin: 5px 0 0; font-size: 0.78rem; color: var(--text-muted); }
 
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-secondary { background: #333; color: var(--text); }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-mini { padding: 6px 10px; font-size: 0.75rem; }
-
+    /* ── Auth bar ── */
     .auth-bar {
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      font-size: 0.85rem;
-      color: var(--text-soft);
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px; flex-wrap: wrap;
+      padding: 10px 14px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); margin-bottom: 16px;
     }
-
-    .auth-right { display: flex; gap: 8px; flex-wrap: wrap; align-items:center; }
-
-    .top-bar {
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
+    .auth-status { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-soft); }
+    .sync-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted);
+      flex-shrink: 0; transition: background 0.3s;
     }
+    .sync-dot.local  { background: var(--warning); }
+    .sync-dot.synced { background: var(--success); }
+    .sync-dot.saving { background: var(--accent); animation: blink 1s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+    .auth-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-    .view { margin-bottom: 16px; }
+    /* ── Buttons ── */
+    button {
+      border: none; border-radius: 999px;
+      padding: 8px 16px; font-size: 0.85rem;
+      cursor: pointer; font-weight: 600; transition: all 0.15s; letter-spacing: 0.01em;
+    }
+    .btn-primary  { background: var(--accent); color: #fff; box-shadow: 0 2px 10px rgba(91,91,214,.3); }
+    .btn-primary:hover  { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-secondary{ background: var(--border-light); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover{ background: #2a2a42; }
+    .btn-danger   { background: transparent; color: var(--danger); border: 1px solid rgba(229,69,69,.3); }
+    .btn-danger:hover   { background: var(--danger-soft); }
+    .btn-ghost    { background: transparent; color: var(--text-soft); border: 1px solid var(--border); }
+    .btn-ghost:hover    { background: var(--border); color: var(--text); }
+    .btn-mini { padding: 5px 10px; font-size: 0.75rem; }
 
+    /* ── Top bar ── */
+    .top-bar { margin-bottom: 16px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .import-label {
+      display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; padding: 8px 16px;
+      border-radius: 999px; background: var(--border-light);
+      color: var(--text); border: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .import-label:hover { background: #2a2a42; }
+
+    /* ── Global stats ── */
+    .global-box {
+      margin: 20px 0;
+      padding: 20px 22px;
+      border-radius: var(--r);
+      background: linear-gradient(135deg, #0f0f1e, #161628);
+      border: 1px solid var(--border-light);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 440px) { .global-box { grid-template-columns: 1fr; } }
+    .global-stat-label {
+      font-size: 0.68rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px;
+    }
+    .global-stat-value {
+      font-size: 2.2rem; font-weight: 900; line-height: 1;
+      transition: color 0.4s;
+    }
+    .global-stat-sub { font-size: 0.72rem; color: var(--text-soft); margin-top: 4px; }
+
+    /* ── Semester list ── */
     .semester-list { display: flex; flex-direction: column; gap: 10px; }
 
     .semester-list-card {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-      gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; transition: border-color .2s;
     }
+    .semester-list-card:hover { border-color: var(--border-light); }
+    .semester-list-left { flex: 1; min-width: 0; }
+    .semester-list-name { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .semester-list-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .semester-list-avg { font-size: 0.82rem; color: var(--text-soft); }
+    .grade-badge {
+      display: inline-flex; align-items: center; padding: 3px 9px;
+      border-radius: 999px; font-size: 0.8rem; font-weight: 800;
+    }
+    .semester-list-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
-    .semester-list-name { font-size: 1rem; font-weight: 700; color: var(--text); }
-    .semester-list-average { font-size: 0.85rem; color: var(--text-soft); margin-top: 3px; }
-    .semester-list-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-
+    /* ── Semester detail card ── */
     .semester-card {
-      background: var(--card);
-      border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 20px;
+      display: flex; flex-direction: column; gap: 14px;
     }
+    .semester-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-    .semester-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
+    /* ── Inputs ── */
     input[type="text"], input[type="number"] {
-      width: 100%;
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid var(--input-border);
-      background: var(--input-bg);
-      color: var(--text);
-      font-size: 0.9rem;
-      box-sizing: border-box;
+      width: 100%; padding: 7px 10px;
+      border-radius: var(--rx); border: 1px solid var(--input-border);
+      background: var(--input-bg); color: var(--text); font-size: .875rem;
+      transition: border-color .15s, box-shadow .15s;
     }
-
-    input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent);
-    }
+    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
 
     .toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: #111;
-      border: 1px solid #2a2a2a;
-      color: var(--text);
-      font-size: 0.85rem;
-      white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 12px; border-radius: 999px;
+      background: var(--input-bg); border: 1px solid var(--input-border);
+      color: var(--text-soft); font-size: .8rem; white-space: nowrap;
+      cursor: pointer; transition: border-color .15s;
     }
-    .toggle input { width: auto; }
+    .toggle:hover { border-color: var(--accent); }
+    .toggle input { width: auto; accent-color: var(--accent); }
 
-    .semester-subjects { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    /* ── Subjects ── */
+    .semester-subjects { display: flex; flex-direction: column; gap: 12px; }
 
     .subject-card {
-      background: var(--card-soft);
-      border-radius: 12px;
-      padding: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      background: var(--card-soft); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 14px 14px 18px;
+      display: flex; flex-direction: column; gap: 10px;
+      position: relative; overflow: hidden; transition: border-color .2s;
     }
+    .subject-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 4px; background: var(--text-muted); border-radius: 4px 0 0 4px;
+      transition: background .4s;
+    }
+    .subject-card.gc-fail::before  { background: var(--grade-fail); }
+    .subject-card.gc-warn::before  { background: var(--grade-warn); }
+    .subject-card.gc-lime::before  { background: var(--grade-lime); }
+    .subject-card.gc-good::before  { background: var(--grade-good); }
 
     .subject-header {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      align-items: center;
+      display: grid; grid-template-columns: 1fr; gap: 8px; align-items: start;
     }
-
-    @media (min-width: 760px) {
-      .subject-header { grid-template-columns: 1fr 190px auto; }
-    }
-
+    @media (min-width: 640px) { .subject-header { grid-template-columns: 1fr 155px auto; } }
     .subject-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    /* ── Table ── */
+    .table-scroll { overflow-x: auto; border-radius: var(--rs); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; min-width: 400px; }
     th, td {
-      border-bottom: 1px solid #2a2a2a;
-      padding: 6px 4px;
-      text-align: left;
-      vertical-align: top;
-      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 6px; text-align: left; vertical-align: middle; color: var(--text);
     }
-    th { color: var(--text-soft); font-weight: 600; }
+    tbody tr:last-child td { border-bottom: none; }
+    th {
+      color: var(--text-muted); font-weight: 600; font-size: .7rem;
+      text-transform: uppercase; letter-spacing: .05em;
+      background: rgba(0,0,0,.25); padding: 8px 6px;
+    }
 
-    .percent-wrapper { display: flex; align-items: center; gap: 6px; }
+    .percent-wrapper { display: flex; align-items: center; gap: 5px; }
     .percent-wrapper span {
-      padding: 3px 6px;
-      background: #333;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      color: var(--text-soft);
-      white-space: nowrap;
+      padding: 3px 5px; background: var(--border); border-radius: var(--rx);
+      font-size: .72rem; color: var(--text-muted); flex-shrink: 0;
     }
 
+    /* ── Sub-evals ── */
     details {
-      background: #121212;
-      border: 1px solid #2a2a2a;
-      border-radius: 10px;
-      padding: 8px 10px;
-      margin-top: 8px;
+      background: rgba(0,0,0,.25); border: 1px solid var(--border);
+      border-radius: var(--rs); padding: 10px 12px; margin-top: 6px;
     }
     details > summary {
-      cursor: pointer;
-      color: var(--text);
-      font-weight: 650;
-      user-select: none;
-      list-style: none;
+      cursor: pointer; color: var(--text-soft); font-weight: 600;
+      font-size: .8rem; user-select: none; list-style: none;
     }
     details > summary::-webkit-details-marker { display: none; }
-    .hint { color: var(--text-soft); font-size: 0.78rem; margin-top: 6px; line-height: 1.35; }
+    .hint { color: var(--text-muted); font-size: .75rem; margin-top: 6px; line-height: 1.4; }
 
-    .subject-footer { font-size: 0.85rem; color: var(--text-soft); line-height: 1.35; }
-    .subject-average { font-weight: 900; color: var(--text); }
+    /* ── Subject footer ── */
+    .subject-footer {
+      padding-top: 10px; border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start;
+    }
+    @media (max-width: 480px) { .subject-footer { grid-template-columns: 1fr; } }
 
+    .subject-avg-label {
+      font-size: .65rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px;
+    }
+    .subject-average {
+      font-size: 1.5rem; font-weight: 900; line-height: 1;
+      transition: color .4s;
+    }
+    .subject-average-sub { font-size: .72rem; color: var(--text-soft); margin-top: 3px; }
+
+    .subject-footer-right {
+      display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .progress-bar {
+      width: 110px; height: 5px; background: var(--border);
+      border-radius: 999px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 999px;
+      background: var(--accent); transition: width .35s, background .35s;
+    }
+    .progress-label { font-size: .7rem; color: var(--text-muted); }
+    .progress-label.ok  { color: var(--success); }
+    .progress-label.bad { color: var(--danger); }
+    .progress-label.over{ color: var(--warning); }
+
+    /* ── Needed grade box ── */
+    .needed-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--rs); padding: 8px 12px;
+      font-size: .78rem; color: var(--text-soft);
+      min-width: 130px; text-align: right;
+    }
+    .needed-label { font-size: .65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+    .needed-value { font-size: 1.4rem; font-weight: 900; line-height: 1; transition: color .4s; }
+    .needed-sub   { font-size: .68rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Tags ── */
+    .tag { display:inline-block; padding:2px 7px; border-radius:999px; font-size:.68rem; font-weight:700; letter-spacing:.03em; }
+    .tag-ok  { background:rgba(34,197,94,.12); color:var(--success); }
+    .tag-bad { background:rgba(239,68,68,.12);  color:var(--danger);  }
+
+    /* ── Semester footer ── */
     .semester-footer {
-      margin-top: 6px;
-      padding-top: 8px;
-      border-top: 1px solid #272727;
-      font-size: 0.95rem;
-      color: var(--text-soft);
-      line-height: 1.35;
+      margin-top: 4px; padding: 16px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between;
+      align-items: flex-end; flex-wrap: wrap; gap: 12px;
     }
-    .semester-average { font-weight: 900; color: var(--text); }
+    .sem-footer-label { font-size: .68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+    .semester-average { font-size: 1.8rem; font-weight: 900; transition: color .4s; }
+    .semester-average-sub { font-size: .78rem; color: var(--text-soft); margin-top: 2px; }
 
-    .tag {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      margin-left: 8px;
+    /* ── Detail topbar ── */
+    .detail-topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
     }
-    .tag-ok { background: var(--tag-ok-bg); color: var(--tag-ok-text); }
-    .tag-bad { background: var(--tag-bad-bg); color: var(--tag-bad-text); }
 
-    .global-box {
-      margin-top: 20px;
-      padding: 14px;
-      border-radius: 12px;
-      background: #111827;
-      border: 1px solid #1e293b;
-      font-size: 0.95rem;
-      line-height: 1.35;
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed; bottom: 20px; right: 20px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 9999; pointer-events: none;
     }
-    .global-main { font-size: 1.4rem; font-weight: 900; color: var(--text); margin-top: 4px; }
+    .toast {
+      background: var(--card); border: 1px solid var(--border-light);
+      border-radius: var(--r); padding: 10px 16px;
+      font-size: .85rem; color: var(--text);
+      box-shadow: 0 8px 30px rgba(0,0,0,.6);
+      animation: tIn .2s ease, tOut .3s ease 2.5s forwards;
+      pointer-events: auto;
+    }
+    .toast.ok  { border-color: rgba(34,197,94,.4); color: var(--success); }
+    .toast.err { border-color: rgba(229,69,69,.4);  color: var(--danger); }
+    @keyframes tIn  { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:none} }
+    @keyframes tOut { from{opacity:1} to{opacity:0;pointer-events:none} }
 
-    .empty-msg { font-size: 0.9rem; color: var(--text-soft); text-align: center; margin-top: 10px; }
+    /* ── Empty state ── */
+    .empty-msg { text-align: center; margin: 48px 0; color: var(--text-muted); }
+    .empty-msg strong { display: block; font-size: 1.1rem; color: var(--text-soft); margin-bottom: 6px; }
+
+    .view { margin-bottom: 16px; }
   </style>
 </head>
 
 <body>
+  <div class="toast-container" id="toastContainer"></div>
+
   <div class="app">
-    <h1>Promedios nms</h1>
+    <div class="app-header">
+      <h1>Promedios nms</h1>
+      <p>Calculadora de notas universitarias — pasa con 4.0</p>
+    </div>
 
     <div class="auth-bar">
-      <div id="userInfo">Modo local (sin sesión)</div>
+      <div class="auth-status">
+        <div class="sync-dot local" id="syncDot"></div>
+        <span id="userInfo">Modo local (sin sesión)</span>
+      </div>
       <div class="auth-right">
-        <button class="btn-primary" id="loginBtn">Iniciar sesión con Google</button>
-        <button class="btn-secondary" id="logoutBtn" style="display:none;">Cerrar sesión</button>
+        <button class="btn-primary btn-mini" id="loginBtn">Iniciar sesión con Google</button>
+        <button class="btn-secondary btn-mini" id="logoutBtn" style="display:none;">Cerrar sesión</button>
       </div>
     </div>
 
     <div id="viewList" class="view">
       <div class="top-bar">
-        <button class="btn-primary" id="addSemesterBtn">Agregar semestre</button>
+        <button class="btn-primary" id="addSemesterBtn">+ Agregar semestre</button>
         <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
         <button class="btn-secondary" id="exportBtn">Exportar JSON</button>
-        <label class="btn-secondary" style="display:inline-flex;align-items:center;gap:8px;">
+        <label class="import-label">
           Importar JSON
           <input type="file" id="importFile" accept="application/json" style="display:none;">
         </label>
-        <button class="btn-danger" id="clearAllBtn">Borrar todo</button>
+        <button class="btn-danger btn-mini" id="clearAllBtn">Borrar todo</button>
       </div>
       <div id="semesterList" class="semester-list"></div>
     </div>
 
     <div id="viewDetail" class="view" style="display:none;">
-      <div class="top-bar" style="justify-content:space-between;">
-        <button class="btn-secondary" id="backBtn">← Volver</button>
-        <button class="btn-danger" id="deleteSemesterDetailBtn">Eliminar semestre</button>
+      <div class="detail-topbar">
+        <button class="btn-ghost btn-mini" id="backBtn">← Volver</button>
+        <button class="btn-danger btn-mini" id="deleteSemesterDetailBtn">Eliminar semestre</button>
       </div>
       <div id="semesterDetail"></div>
     </div>
 
     <div class="global-box">
-      Promedio general (usando redondeados):
-      <div class="global-main" id="globalAverage">-</div>
+      <div>
+        <div class="global-stat-label">Promedio global exacto</div>
+        <div class="global-stat-value" id="globalNormal">—</div>
+        <div class="global-stat-sub">Sin redondear</div>
+      </div>
+      <div>
+        <div class="global-stat-label">Promedio global redondeado</div>
+        <div class="global-stat-value" id="globalRounded">—</div>
+        <div class="global-stat-sub">Con 1 decimal por ramo</div>
+      </div>
     </div>
   </div>
 
@@ -273,9 +385,7 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    /* =========================
-       CONFIG
-    ========================= */
+    /* ── CONFIG ── */
     const firebaseConfig = {
       apiKey: "AIzaSyAcbTdLv_uULcoIHvtrp5nfoB1Q_m-ziDc",
       authDomain: "promedios-ubb.firebaseapp.com",
@@ -285,260 +395,231 @@
       appId: "1:170154498162:web:d79694baf51cc25382caeb"
     };
 
-    const LOCAL_STORAGE_KEY = "promedios_semestres_clean_v2";
-    const SAVE_DELAY_MS = 350;
+    const LOCAL_KEY    = "promedios_semestres_clean_v2";
+    const SAVE_DELAY   = 350;
+    const GRADE_MIN    = 1.0;
+    const GRADE_MAX    = 7.0;
+    const PASS_GRADE   = 4.0;   // nota de aprobación
+    const PCT_TOLERANCE = 1.0;
 
-    const GRADE_MIN = 1.0;
-    const GRADE_MAX = 7.0;
-
-    const PERCENT_TOLERANCE = 1.0;
-
-    /* =========================
-       FIREBASE
-    ========================= */
-    const appFB = initializeApp(firebaseConfig);
-    const auth = getAuth(appFB);
+    /* ── FIREBASE ── */
+    const appFB    = initializeApp(firebaseConfig);
+    const auth     = getAuth(appFB);
     const provider = new GoogleAuthProvider();
-    const db = getFirestore(appFB);
+    const db       = getFirestore(appFB);
 
-    /* =========================
-       DOM
-    ========================= */
-    const viewList = document.getElementById("viewList");
-    const viewDetail = document.getElementById("viewDetail");
-    const semesterListEl = document.getElementById("semesterList");
+    /* ── DOM ── */
+    const viewList         = document.getElementById("viewList");
+    const viewDetail       = document.getElementById("viewDetail");
+    const semesterListEl   = document.getElementById("semesterList");
     const semesterDetailEl = document.getElementById("semesterDetail");
-    const globalAverageEl = document.getElementById("globalAverage");
+    const globalNormalEl   = document.getElementById("globalNormal");
+    const globalRoundedEl  = document.getElementById("globalRounded");
+    const syncDotEl        = document.getElementById("syncDot");
+    const userInfoEl       = document.getElementById("userInfo");
+    const loginBtn         = document.getElementById("loginBtn");
+    const logoutBtn        = document.getElementById("logoutBtn");
+    const addSemesterBtn   = document.getElementById("addSemesterBtn");
+    const recalcAllBtn     = document.getElementById("recalcAllBtn");
+    const clearAllBtn      = document.getElementById("clearAllBtn");
+    const backBtn          = document.getElementById("backBtn");
+    const delSemBtn        = document.getElementById("deleteSemesterDetailBtn");
+    const exportBtn        = document.getElementById("exportBtn");
+    const importFile       = document.getElementById("importFile");
 
-    const addSemesterBtn = document.getElementById("addSemesterBtn");
-    const recalcAllBtn = document.getElementById("recalcAllBtn");
-    const clearAllBtn = document.getElementById("clearAllBtn");
-    const backBtn = document.getElementById("backBtn");
-    const deleteSemesterDetailBtn = document.getElementById("deleteSemesterDetailBtn");
-
-    const userInfoEl = document.getElementById("userInfo");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    const exportBtn = document.getElementById("exportBtn");
-    const importFile = document.getElementById("importFile");
-
-    /* =========================
-       STATE
-    ========================= */
+    /* ── STATE ── */
     let currentUser = null;
     let semestersData = [];
-    let selectedSemesterIndex = null;
-
+    let selectedIdx = null;
     let saveTimer = null;
-    let lightRenderTimer = null;
+    let lightTimer = null;
 
-    /* =========================
+    /* ──────────────────────────────
        HELPERS
-    ========================= */
+    ────────────────────────────── */
     const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 
-    // ✅ Redondeo robusto a 1 decimal (corrige 5.85 -> 5.9 por floating point)
-    function round1(v) {
-      return Math.round((v + Number.EPSILON) * 10) / 10;
-    }
+    function round1(v) { return Math.round((v + Number.EPSILON) * 10) / 10; }
+    function clamp(v, a, b) { return Math.min(Math.max(v, a), b); }
+    function norm(s) { return String(s ?? "").replace(",", ".").trim(); }
 
-    function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
-
-    function normalizeNumberInput(str) {
-      return String(str ?? "").replace(",", ".").trim();
-    }
-
-    function parsePercent(str) {
-      const raw = normalizeNumberInput(str);
-      if (!raw) return NaN;
-      const v = parseFloat(raw);
+    function parsePercent(s) {
+      const v = parseFloat(norm(s));
       return Number.isFinite(v) ? clamp(v, 0, 100) : NaN;
     }
 
-    // NOTAS: permite 65 => 6.5, 70 => 7.0, además de 6.5 y 6,5.
-    function parseGrade(str) {
-      const raw = normalizeNumberInput(str);
+    function parseGrade(s) {
+      const raw = norm(s);
       if (!raw) return NaN;
-
       let v = parseFloat(raw);
       if (!Number.isFinite(v)) return NaN;
-
-      if (v > 7 && v <= 70) v = v / 10; // compatibilidad
-
+      if (v > 7 && v <= 70) v = v / 10;
       return clamp(v, GRADE_MIN, GRADE_MAX);
     }
 
-    function safeFixed(v, n = 2) {
-      return Number.isFinite(v) ? v.toFixed(n) : "-";
+    function safeFixed(v, n = 2) { return Number.isFinite(v) ? v.toFixed(n) : "—"; }
+
+    /* Grade class + color helpers */
+    function gradeClass(g) {
+      if (!Number.isFinite(g)) return "";
+      if (g < 4.0) return "gc-fail";
+      if (g < 5.0) return "gc-warn";
+      if (g < 6.0) return "gc-lime";
+      return "gc-good";
     }
 
-    function showListView() {
-      viewList.style.display = "block";
-      viewDetail.style.display = "none";
+    function gradeColor(g) {
+      if (!Number.isFinite(g)) return "var(--text)";
+      if (g < 4.0) return "var(--grade-fail)";
+      if (g < 5.0) return "var(--grade-warn)";
+      if (g < 6.0) return "var(--grade-lime)";
+      return "var(--grade-good)";
     }
 
-    function showDetailView() {
-      viewList.style.display = "none";
-      viewDetail.style.display = "block";
+    /* Toast notification */
+    function toast(msg, type = "") {
+      const c = document.getElementById("toastContainer");
+      const t = document.createElement("div");
+      t.className = "toast" + (type ? " " + type : "");
+      t.textContent = msg;
+      c.append(t);
+      setTimeout(() => t.remove(), 2900);
     }
+
+    /* Sync dot state */
+    function setSyncDot(state) {
+      syncDotEl.className = "sync-dot " + state;
+    }
+
+    function showListView()   { viewList.style.display = "block";  viewDetail.style.display = "none"; }
+    function showDetailView() { viewList.style.display = "none";   viewDetail.style.display = "block"; }
 
     function scheduleSave() {
+      setSyncDot("saving");
       clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => void saveData(), SAVE_DELAY_MS);
+      saveTimer = setTimeout(async () => { await saveData(); setSyncDot(currentUser ? "synced" : "local"); }, SAVE_DELAY);
     }
 
     function scheduleLightRender() {
-      clearTimeout(lightRenderTimer);
-      lightRenderTimer = setTimeout(() => {
-        renderSemesterList();
-        renderGlobalAverage();
-      }, 200);
+      clearTimeout(lightTimer);
+      lightTimer = setTimeout(() => { renderSemesterList(); renderGlobalAverage(); }, 200);
     }
 
-    /* =========================
+    /* ──────────────────────────────
        DATA FACTORIES
-    ========================= */
-    function emptySubEval() { return { name: "", grade: "", percent: "" }; }
+    ────────────────────────────── */
+    const emptySubEval = () => ({ name: "", grade: "", percent: "" });
+    const emptyEval    = () => ({ name: "", grade: "", percent: "", useSubs: false, subs: [emptySubEval()] });
+    const emptySubject = () => ({ name: "", weight: "", evaluations: [emptyEval()] });
+    const emptySemester= () => ({ id: uid(), name: "", useWeights: false, subjects: [emptySubject()] });
 
-    function emptyEval() {
-      return { name: "", grade: "", percent: "", useSubs: false, subs: [emptySubEval()] };
-    }
-
-    function emptySubject() {
-      return { name: "", weight: "", evaluations: [emptyEval()] }; // weight opcional
-    }
-
-    function emptySemester() {
-      return { id: uid(), name: "", useWeights: false, subjects: [emptySubject()] }; // toggle simple
-    }
-
-    /* =========================
+    /* ──────────────────────────────
        CALC
-    ========================= */
-    function computeEvaluationGrade(ev) {
+    ────────────────────────────── */
+    function evalGrade(ev) {
       if (!ev?.useSubs) {
         const g = parseGrade(ev?.grade);
         return Number.isFinite(g) ? g : NaN;
       }
-
       let tot = 0, w = 0;
       for (const s of (ev.subs || [])) {
-        const g = parseGrade(s.grade);
-        const p = parsePercent(s.percent);
-        if (Number.isFinite(g) && Number.isFinite(p)) {
-          tot += p;
-          w += g * p;
-        }
+        const g = parseGrade(s.grade), p = parsePercent(s.percent);
+        if (Number.isFinite(g) && Number.isFinite(p)) { tot += p; w += g * p; }
       }
-      if (!(tot > 0)) return NaN;
-      return w / tot;
+      return tot > 0 ? w / tot : NaN;
     }
 
     function computeSubject(sub) {
       let tot = 0, w = 0;
+      for (const ev of (sub.evaluations || [])) {
+        const p = parsePercent(ev.percent), g = evalGrade(ev);
+        if (Number.isFinite(p) && Number.isFinite(g)) { tot += p; w += g * p; }
+      }
+      if (!(tot > 0)) return { avg: null, rounded1: null, sumPercent: 0 };
+      const avg = w / tot;
+      return { avg, rounded1: round1(avg), sumPercent: tot };
+    }
+
+    /* Nota necesaria para aprobar (o llegar a `target`) con las evaluaciones pendientes */
+    function computeNeeded(sub, target = PASS_GRADE) {
+      let donePercent = 0, doneWeighted = 0;
+      let pendingPercent = 0;
 
       for (const ev of (sub.evaluations || [])) {
         const p = parsePercent(ev.percent);
-        const g = computeEvaluationGrade(ev);
-        if (Number.isFinite(p) && Number.isFinite(g)) {
-          tot += p;
-          w += g * p;
+        if (!Number.isFinite(p) || p <= 0) continue;
+
+        const g = evalGrade(ev);
+        if (Number.isFinite(g)) {
+          // Esta evaluación ya tiene nota
+          donePercent   += p;
+          doneWeighted  += g * p;
+        } else {
+          // Evaluación pendiente (tiene % pero no nota)
+          pendingPercent += p;
         }
       }
 
-      if (!(tot > 0)) return { avg: null, rounded1: null, sumPercent: 0 };
+      if (pendingPercent <= 1e-9) return null; // No hay pendientes
 
-      const avg = w / tot;
-      const r = round1(avg); // ✅ redondeo robusto a 1 decimal
-      return { avg, rounded1: r, sumPercent: tot };
+      // needed * pendingPercent + doneWeighted = target * (donePercent + pendingPercent)
+      const totalPct = donePercent + pendingPercent;
+      const needed   = (target * totalPct - doneWeighted) / pendingPercent;
+      return needed;
     }
 
     function computeSemester(sem) {
-      let sumN = 0, sumR = 0, c = 0;
-
-      let sumNW = 0, sumRW = 0, sumW = 0;
-
+      let sumN = 0, sumR = 0, c = 0, sumNW = 0, sumRW = 0, sumW = 0;
       for (const sub of (sem.subjects || [])) {
-        const res = computeSubject(sub);
-        if (res.avg !== null) {
+        const r = computeSubject(sub);
+        if (r.avg !== null) {
           c++;
-          sumN += res.avg;
-          sumR += res.rounded1;
-
-          const w = parseFloat(normalizeNumberInput(sub.weight));
-          const ww = (sem.useWeights && Number.isFinite(w) && w > 0) ? w : 1;
-
-          sumW += ww;
-          sumNW += res.avg * ww;
-          sumRW += res.rounded1 * ww;
+          sumN += r.avg; sumR += r.rounded1;
+          const wv = parseFloat(norm(sub.weight));
+          const ww = (sem.useWeights && Number.isFinite(wv) && wv > 0) ? wv : 1;
+          sumW += ww; sumNW += r.avg * ww; sumRW += r.rounded1 * ww;
         }
       }
-
       if (!c) return null;
-
-      if (sem.useWeights) {
-        return { normal: sumNW / sumW, rounded: sumRW / sumW };
-      }
+      if (sem.useWeights) return { normal: sumNW / sumW, rounded: sumRW / sumW };
       return { normal: sumN / c, rounded: sumR / c };
     }
 
     function computeGlobal() {
-      // Promedio de TODOS los ramos (respeta useWeights por semestre si está activado)
-      let count = 0;
-      let sumN = 0, sumR = 0;
-
-      let sumNW = 0, sumRW = 0, sumW = 0;
-
+      let sumN = 0, sumR = 0, c = 0, sumNW = 0, sumRW = 0, sumW = 0;
       for (const sem of semestersData) {
         for (const sub of (sem.subjects || [])) {
-          const res = computeSubject(sub);
-          if (res.avg !== null) {
-            count++;
-            sumN += res.avg;
-            sumR += res.rounded1;
-
-            const w = parseFloat(normalizeNumberInput(sub.weight));
-            const ww = (sem.useWeights && Number.isFinite(w) && w > 0) ? w : 1;
-
-            sumW += ww;
-            sumNW += res.avg * ww;
-            sumRW += res.rounded1 * ww;
+          const r = computeSubject(sub);
+          if (r.avg !== null) {
+            c++;
+            sumN += r.avg; sumR += r.rounded1;
+            const wv = parseFloat(norm(sub.weight));
+            const ww = (sem.useWeights && Number.isFinite(wv) && wv > 0) ? wv : 1;
+            sumW += ww; sumNW += r.avg * ww; sumRW += r.rounded1 * ww;
           }
         }
       }
-
-      if (!count) return null;
-
-      // Si hay pesos usados, el promedio ponderado global usa esos pesos.
-      // Si no, se reduce a promedio simple.
-      const useAnyWeights = sumW > 0 && (Math.abs(sumW - count) > 1e-9);
-      if (useAnyWeights) return { normal: sumNW / sumW, rounded: sumRW / sumW };
-
-      return { normal: sumN / count, rounded: sumR / count };
+      if (!c) return null;
+      const anyWeights = Math.abs(sumW - c) > 1e-9;
+      if (anyWeights) return { normal: sumNW / sumW, rounded: sumRW / sumW };
+      return { normal: sumN / c, rounded: sumR / c };
     }
 
-    /* =========================
+    /* ──────────────────────────────
        STORAGE / SYNC
-    ========================= */
+    ────────────────────────────── */
     function loadFromLocal() {
       try {
-        const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        const raw = localStorage.getItem(LOCAL_KEY);
         if (!raw) return { semesters: [], updatedAtLocal: 0 };
-        const data = JSON.parse(raw);
-        return {
-          semesters: Array.isArray(data.semesters) ? data.semesters : [],
-          updatedAtLocal: Number.isFinite(data.updatedAtLocal) ? data.updatedAtLocal : 0
-        };
-      } catch {
-        return { semesters: [], updatedAtLocal: 0 };
-      }
+        const d = JSON.parse(raw);
+        return { semesters: Array.isArray(d.semesters) ? d.semesters : [], updatedAtLocal: d.updatedAtLocal || 0 };
+      } catch { return { semesters: [], updatedAtLocal: 0 }; }
     }
 
     async function loadFromRemote(user) {
       try {
-        const ref = doc(db, "promedios_semestres", user.uid);
-        const snap = await getDoc(ref);
+        const snap = await getDoc(doc(db, "promedios_semestres", user.uid));
         if (!snap.exists()) return null;
         const d = snap.data();
         return {
@@ -546,91 +627,92 @@
           updatedAtLocal: d.updatedAtLocal || 0,
           updatedAtRemoteMs: d.updatedAt?.toMillis?.() || 0
         };
-      } catch (e) {
-        console.error("Error Firestore load:", e);
-        return null;
-      }
+      } catch (e) { console.error("Firestore load:", e); return null; }
     }
 
     async function saveData() {
       const payload = { semesters: semestersData, updatedAtLocal: Date.now() };
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
-
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(payload));
       if (!currentUser) return;
-
       try {
-        const ref = doc(db, "promedios_semestres", currentUser.uid);
-        await setDoc(ref, {
+        await setDoc(doc(db, "promedios_semestres", currentUser.uid), {
           semesters: semestersData,
           updatedAtLocal: payload.updatedAtLocal,
           updatedAt: serverTimestamp()
         }, { merge: true });
-      } catch (e) {
-        console.error("Error Firestore save:", e);
-      }
+      } catch (e) { console.error("Firestore save:", e); }
     }
 
     async function clearRemote() {
       if (!currentUser) return;
       try {
-        const ref = doc(db, "promedios_semestres", currentUser.uid);
-        await setDoc(ref, {
-          semesters: [],
-          updatedAtLocal: Date.now(),
-          updatedAt: serverTimestamp()
+        await setDoc(doc(db, "promedios_semestres", currentUser.uid), {
+          semesters: [], updatedAtLocal: Date.now(), updatedAt: serverTimestamp()
         }, { merge: true });
-      } catch (e) {
-        console.error("Error Firestore clear:", e);
-      }
+      } catch (e) { console.error("Firestore clear:", e); }
     }
 
-    /* =========================
+    /* ──────────────────────────────
        RENDER LIST
-    ========================= */
+    ────────────────────────────── */
     function renderSemesterList() {
       semesterListEl.innerHTML = "";
-
       if (!semestersData.length) {
-        semesterListEl.innerHTML = `<p class="empty-msg">No hay semestres. Agrega uno.</p>`;
+        semesterListEl.innerHTML = `<div class="empty-msg"><strong>Sin semestres</strong>Haz clic en "Agregar semestre" para comenzar.</div>`;
         return;
       }
-
       semestersData.forEach((sem, idx) => {
         const card = document.createElement("div");
         card.className = "semester-list-card";
 
-        const main = document.createElement("div");
+        const left = document.createElement("div");
+        left.className = "semester-list-left";
+
         const name = document.createElement("div");
         name.className = "semester-list-name";
-        name.textContent = sem.name?.trim() ? sem.name : `Semestre ${idx + 1}`;
+        name.textContent = sem.name?.trim() || `Semestre ${idx + 1}`;
 
-        const avgInfo = document.createElement("div");
-        avgInfo.className = "semester-list-average";
+        const meta = document.createElement("div");
+        meta.className = "semester-list-meta";
+
         const avg = computeSemester(sem);
         if (avg) {
-          avgInfo.innerHTML = `Normal: ${safeFixed(avg.normal, 2)} · Redondeado (1 decimal): <strong>${safeFixed(avg.rounded, 1)}</strong>`;
+          const badge = document.createElement("span");
+          badge.className = "grade-badge";
+          const col = gradeColor(avg.rounded);
+          badge.style.cssText = `color:${col};background:${col.replace("var(", "var(--").replace("--grade-", "--").replace(")", "-bg)")};`;
+          // Simpler: just inline style
+          badge.style.background = "rgba(0,0,0,.3)";
+          badge.style.color = gradeColor(avg.rounded);
+          badge.style.border = `1px solid ${gradeColor(avg.rounded)}40`;
+          badge.textContent = safeFixed(avg.rounded, 1);
+
+          const avgText = document.createElement("span");
+          avgText.className = "semester-list-avg";
+          avgText.textContent = `Normal: ${safeFixed(avg.normal, 2)}`;
+
+          meta.append(badge, avgText);
         } else {
-          avgInfo.textContent = "Sin datos";
+          const avgText = document.createElement("span");
+          avgText.className = "semester-list-avg";
+          avgText.textContent = "Sin datos";
+          meta.append(avgText);
         }
 
-        main.append(name, avgInfo);
+        left.append(name, meta);
 
         const actions = document.createElement("div");
         actions.className = "semester-list-actions";
 
-        const open = document.createElement("button");
-        open.className = "btn-primary btn-mini";
-        open.textContent = "Abrir";
-        open.onclick = () => {
-          selectedSemesterIndex = idx;
-          renderSemesterDetail();
-          showDetailView();
-        };
+        const openBtn = document.createElement("button");
+        openBtn.className = "btn-primary btn-mini";
+        openBtn.textContent = "Abrir";
+        openBtn.onclick = () => { selectedIdx = idx; renderSemesterDetail(); showDetailView(); };
 
-        const del = document.createElement("button");
-        del.className = "btn-danger btn-mini";
-        del.textContent = "Eliminar";
-        del.onclick = () => {
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn-danger btn-mini";
+        delBtn.textContent = "Eliminar";
+        delBtn.onclick = () => {
           if (!confirm("¿Eliminar semestre?")) return;
           semestersData.splice(idx, 1);
           scheduleSave();
@@ -638,26 +720,25 @@
           renderGlobalAverage();
         };
 
-        actions.append(open, del);
-        card.append(main, actions);
+        actions.append(openBtn, delBtn);
+        card.append(left, actions);
         semesterListEl.append(card);
       });
     }
 
-    /* =========================
+    /* ──────────────────────────────
        RENDER DETAIL
-    ========================= */
+    ────────────────────────────── */
     function renderSemesterDetail() {
       semesterDetailEl.innerHTML = "";
-      const sem = semestersData[selectedSemesterIndex];
+      const sem = semestersData[selectedIdx];
       if (!sem) return;
-
-      // default
       if (typeof sem.useWeights !== "boolean") sem.useWeights = false;
 
       const card = document.createElement("div");
       card.className = "semester-card";
 
+      /* header */
       const header = document.createElement("div");
       header.className = "semester-header";
 
@@ -673,548 +754,478 @@
       cb.type = "checkbox";
       cb.checked = !!sem.useWeights;
       cb.onchange = syncDetailToData;
-      const txt = document.createElement("span");
-      txt.textContent = "Ponderar por créditos/peso (opcional)";
-      toggle.append(cb, txt);
-
+      const tTxt = document.createElement("span");
+      tTxt.textContent = "Ponderar por créditos/peso";
+      toggle.append(cb, tTxt);
       header.append(semName, toggle);
 
+      /* subjects */
       const subs = document.createElement("div");
       subs.className = "semester-subjects";
+      (sem.subjects?.length ? sem.subjects : [emptySubject()]).forEach(s => buildSubjectCard(subs, s));
 
-      (sem.subjects || []).forEach(s => createSubjectCardDOM(subs, s));
-      if (!sem.subjects?.length) createSubjectCardDOM(subs, emptySubject());
+      const addSubBtn = document.createElement("button");
+      addSubBtn.className = "btn-primary";
+      addSubBtn.textContent = "+ Agregar asignatura";
+      addSubBtn.onclick = () => { buildSubjectCard(subs, emptySubject()); syncDetailToData(); };
 
-      const addSubjectBtn = document.createElement("button");
-      addSubjectBtn.className = "btn-primary";
-      addSubjectBtn.textContent = "Agregar asignatura";
-      addSubjectBtn.onclick = () => { createSubjectCardDOM(subs, emptySubject()); syncDetailToData(); };
-
+      /* footer */
       const footer = document.createElement("div");
       footer.className = "semester-footer";
-      footer.innerHTML = `Promedio semestre: <span class="semester-average">-</span>`;
+      footer.innerHTML = `
+        <div>
+          <div class="sem-footer-label">Promedio semestre</div>
+          <div class="semester-average">—</div>
+          <div class="semester-average-sub"></div>
+        </div>
+      `;
 
-      card.append(header, subs, addSubjectBtn, footer);
+      card.append(header, subs, addSubBtn, footer);
       semesterDetailEl.append(card);
-
       syncDetailToData(true);
     }
 
-    function createSubjectCardDOM(parent, data = emptySubject()) {
+    function buildSubjectCard(parent, data = emptySubject()) {
       const card = document.createElement("div");
       card.className = "subject-card";
 
-      const header = document.createElement("div");
-      header.className = "subject-header";
+      /* header */
+      const hdr = document.createElement("div");
+      hdr.className = "subject-header";
 
-      const name = document.createElement("input");
-      name.type = "text";
-      name.placeholder = "Nombre asignatura";
-      name.value = data.name || "";
-      name.oninput = syncDetailToData;
+      const nameIn = document.createElement("input");
+      nameIn.type = "text";
+      nameIn.placeholder = "Nombre asignatura";
+      nameIn.value = data.name || "";
+      nameIn.oninput = syncDetailToData;
 
-      const weight = document.createElement("input");
-      weight.type = "text";
-      weight.inputMode = "decimal";
-      weight.placeholder = "Créditos/peso (opcional)";
-      weight.value = data.weight ?? "";
-      weight.oninput = syncDetailToData;
+      const wtIn = document.createElement("input");
+      wtIn.type = "text";
+      wtIn.inputMode = "decimal";
+      wtIn.placeholder = "Créditos/peso (opc.)";
+      wtIn.value = data.weight ?? "";
+      wtIn.oninput = syncDetailToData;
 
-      const actions = document.createElement("div");
-      actions.className = "subject-actions";
+      const acts = document.createElement("div");
+      acts.className = "subject-actions";
 
-      const addEvalBtn = document.createElement("button");
-      addEvalBtn.className = "btn-secondary btn-mini";
-      addEvalBtn.textContent = "Agregar nota";
-      addEvalBtn.onclick = () => { addEvalRow(tbody, emptyEval()); syncDetailToData(); };
+      const addEv = document.createElement("button");
+      addEv.className = "btn-secondary btn-mini";
+      addEv.textContent = "+ Nota";
+      addEv.onclick = () => { addEvalRow(tbody, emptyEval()); syncDetailToData(); };
 
-      const delBtn = document.createElement("button");
-      delBtn.className = "btn-danger btn-mini";
-      delBtn.textContent = "Eliminar ramo";
-      delBtn.onclick = () => {
-        if (!confirm("¿Eliminar ramo?")) return;
-        card.remove();
-        syncDetailToData();
-      };
+      const delSubBtn = document.createElement("button");
+      delSubBtn.className = "btn-danger btn-mini";
+      delSubBtn.textContent = "Eliminar ramo";
+      delSubBtn.onclick = () => { if (!confirm("¿Eliminar ramo?")) return; card.remove(); syncDetailToData(); };
 
-      actions.append(addEvalBtn, delBtn);
-      header.append(name, weight, actions);
+      acts.append(addEv, delSubBtn);
+      hdr.append(nameIn, wtIn, acts);
+
+      /* table */
+      const wrap = document.createElement("div");
+      wrap.className = "table-scroll";
 
       const table = document.createElement("table");
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th style="width: 30%;">Evaluación</th>
-            <th style="width: 20%;">Nota</th>
-            <th style="width: 20%;">%</th>
-            <th style="width: 15%;">Dividir</th>
-            <th style="width: 15%;">Acción</th>
-          </tr>
-        </thead>
-      `;
+      table.innerHTML = `<thead><tr>
+        <th style="width:28%">Evaluación</th>
+        <th style="width:20%">Nota</th>
+        <th style="width:19%">%</th>
+        <th style="width:13%">Dividir</th>
+        <th style="width:20%">Acción</th>
+      </tr></thead>`;
       const tbody = document.createElement("tbody");
       table.append(tbody);
+      wrap.append(table);
 
-      (data.evaluations?.length ? data.evaluations : [emptyEval()])
-        .forEach(ev => addEvalRow(tbody, ev));
+      (data.evaluations?.length ? data.evaluations : [emptyEval()]).forEach(ev => addEvalRow(tbody, ev));
 
+      /* footer */
       const footer = document.createElement("div");
       footer.className = "subject-footer";
       footer.innerHTML = `
-        Promedio asignatura:
-        <span class="subject-average">-</span><br>
-        Suma %: <strong class="subject-weight">0%</strong>
-        <span class="subject-tag tag"></span>
+        <div>
+          <div class="subject-avg-label">Promedio asignatura</div>
+          <div class="subject-average">—</div>
+          <div class="subject-average-sub"></div>
+        </div>
+        <div class="subject-footer-right">
+          <div class="needed-box">
+            <div class="needed-label">Necesitas para aprobar</div>
+            <div class="needed-value">—</div>
+            <div class="needed-sub"></div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+            <span class="progress-label">0%</span>
+          </div>
+        </div>
       `;
 
-      card.append(header, table, footer);
+      card.append(hdr, wrap, footer);
       parent.append(card);
     }
 
     function addEvalRow(tbody, evData) {
       const tr = document.createElement("tr");
 
-      const tdN = document.createElement("td");
-      const n = document.createElement("input");
-      n.type = "text";
-      n.placeholder = "Ej: Test / Certamen";
-      n.value = evData.name || "";
-      n.oninput = syncDetailToData;
-      tdN.append(n);
+      const makeCell = (child) => { const td = document.createElement("td"); td.append(child); return td; };
 
-      const tdG = document.createElement("td");
-      const g = document.createElement("input");
-      g.type = "text";
-      g.inputMode = "decimal";
-      g.placeholder = "Ej: 65 ó 6,5";
-      g.value = evData.grade ?? "";
-      g.oninput = syncDetailToData;
-      tdG.append(g);
+      const nIn = document.createElement("input");
+      nIn.type = "text"; nIn.placeholder = "Test / Certamen"; nIn.value = evData.name || "";
+      nIn.oninput = syncDetailToData;
 
-      const tdP = document.createElement("td");
-      const wrap = document.createElement("div");
-      wrap.className = "percent-wrapper";
-      const p = document.createElement("input");
-      p.type = "text";
-      p.inputMode = "decimal";
-      p.placeholder = "Ej: 30";
-      p.value = evData.percent ?? "";
-      p.oninput = syncDetailToData;
-      const pct = document.createElement("span");
-      pct.textContent = "%";
-      wrap.append(p, pct);
-      tdP.append(wrap);
+      const gIn = document.createElement("input");
+      gIn.type = "text"; gIn.inputMode = "decimal"; gIn.placeholder = "Ej: 55 ó 5,5";
+      gIn.value = evData.grade ?? ""; gIn.oninput = syncDetailToData;
 
-      const tdSplit = document.createElement("td");
-      const split = document.createElement("input");
-      split.type = "checkbox";
-      split.checked = !!evData.useSubs;
-      split.onchange = () => {
-        details.open = split.checked;
-        syncDetailToData();
-      };
-      tdSplit.append(split);
+      const pWrap = document.createElement("div");
+      pWrap.className = "percent-wrapper";
+      const pIn = document.createElement("input");
+      pIn.type = "text"; pIn.inputMode = "decimal"; pIn.placeholder = "Ej: 30";
+      pIn.value = evData.percent ?? ""; pIn.oninput = syncDetailToData;
+      const pSpan = document.createElement("span"); pSpan.textContent = "%";
+      pWrap.append(pIn, pSpan);
 
-      const tdA = document.createElement("td");
-      const del = document.createElement("button");
-      del.className = "btn-danger btn-mini";
-      del.textContent = "X";
-      del.onclick = () => {
+      const splitCb = document.createElement("input");
+      splitCb.type = "checkbox"; splitCb.checked = !!evData.useSubs;
+      splitCb.onchange = () => { detailsEl.open = splitCb.checked; syncDetailToData(); };
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn-danger btn-mini"; delBtn.textContent = "✕";
+      delBtn.onclick = () => {
         if (!confirm("¿Eliminar evaluación?")) return;
-        const detailsRow = tr.nextSibling;
+        const next = tr.nextSibling;
         tr.remove();
-        if (detailsRow && detailsRow.querySelector?.("details")) detailsRow.remove();
+        if (next?.querySelector?.("details")) next.remove();
         syncDetailToData();
       };
-      tdA.append(del);
 
-      tr.append(tdN, tdG, tdP, tdSplit, tdA);
+      tr.append(makeCell(nIn), makeCell(gIn), makeCell(pWrap), makeCell(splitCb), makeCell(delBtn));
 
-      // Sub-evaluaciones
+      /* Sub-eval row */
       const detailsRow = document.createElement("tr");
-      const detailsTd = document.createElement("td");
+      const detailsTd  = document.createElement("td");
       detailsTd.colSpan = 5;
 
-      const details = document.createElement("details");
-      details.open = !!evData.useSubs;
+      const detailsEl = document.createElement("details");
+      detailsEl.open = !!evData.useSubs;
 
       const summary = document.createElement("summary");
       summary.textContent = "Sub-evaluaciones (opcional)";
 
       const hint = document.createElement("div");
       hint.className = "hint";
-      hint.textContent = "Ej: si esta evaluación pesa 30% del ramo, puedes dividirla en partes internas con % interno (30/25/25/20) y sus notas.";
+      hint.textContent = "Divide esta evaluación en partes internas con su % interno y sus notas.";
 
       const subTable = document.createElement("table");
-      subTable.innerHTML = `
-        <thead>
-          <tr>
-            <th style="width: 40%;">Nombre</th>
-            <th style="width: 25%;">Nota</th>
-            <th style="width: 25%;">% interno</th>
-            <th style="width: 10%;">Acción</th>
-          </tr>
-        </thead>
-      `;
+      subTable.innerHTML = `<thead><tr>
+        <th style="width:35%">Nombre</th><th style="width:25%">Nota</th><th style="width:25%">% interno</th><th style="width:15%">—</th>
+      </tr></thead>`;
       const subTbody = document.createElement("tbody");
       subTable.append(subTbody);
 
-      const subs = (evData.subs?.length ? evData.subs : [emptySubEval()]);
-      subs.forEach(s => addSubRow(subTbody, s));
+      (evData.subs?.length ? evData.subs : [emptySubEval()]).forEach(s => addSubRow(subTbody, s));
 
       const subBtns = document.createElement("div");
-      subBtns.style.display = "flex";
-      subBtns.style.gap = "8px";
-      subBtns.style.flexWrap = "wrap";
-      subBtns.style.marginTop = "8px";
+      subBtns.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;";
 
-      const addSub = document.createElement("button");
-      addSub.className = "btn-secondary btn-mini";
-      addSub.textContent = "Agregar sub";
-      addSub.onclick = () => {
-        split.checked = true;
-        details.open = true;
-        addSubRow(subTbody, emptySubEval());
-        syncDetailToData();
+      const addSubBtn = document.createElement("button");
+      addSubBtn.className = "btn-secondary btn-mini"; addSubBtn.textContent = "+ Sub";
+      addSubBtn.onclick = () => { splitCb.checked = true; detailsEl.open = true; addSubRow(subTbody, emptySubEval()); syncDetailToData(); };
+
+      const clrSub = document.createElement("button");
+      clrSub.className = "btn-danger btn-mini"; clrSub.textContent = "Borrar subs";
+      clrSub.onclick = () => {
+        if (!confirm("¿Borrar sub-evaluaciones?")) return;
+        subTbody.innerHTML = ""; addSubRow(subTbody, emptySubEval());
+        splitCb.checked = true; detailsEl.open = true; syncDetailToData();
       };
 
-      const clearSubs = document.createElement("button");
-      clearSubs.className = "btn-danger btn-mini";
-      clearSubs.textContent = "Borrar subs";
-      clearSubs.onclick = () => {
-        if (!confirm("¿Borrar todas las sub-evaluaciones?")) return;
-        subTbody.innerHTML = "";
-        addSubRow(subTbody, emptySubEval());
-        split.checked = true;
-        details.open = true;
-        syncDetailToData();
-      };
-
-      subBtns.append(addSub, clearSubs);
-
-      details.append(summary, hint, subTable, subBtns);
-      detailsTd.append(details);
+      subBtns.append(addSubBtn, clrSub);
+      detailsEl.append(summary, hint, subTable, subBtns);
+      detailsTd.append(detailsEl);
       detailsRow.append(detailsTd);
-
       tbody.append(tr, detailsRow);
 
-      if (!split.checked) details.open = false;
+      if (!splitCb.checked) detailsEl.open = false;
     }
 
     function addSubRow(subTbody, subData) {
       const tr = document.createElement("tr");
+      const mkC = (el) => { const td = document.createElement("td"); td.append(el); return td; };
 
-      const tdN = document.createElement("td");
-      const n = document.createElement("input");
-      n.type = "text";
-      n.placeholder = "Ej: Test 1";
-      n.value = subData.name ?? "";
-      n.oninput = syncDetailToData;
-      tdN.append(n);
+      const nI = document.createElement("input"); nI.type="text"; nI.placeholder="Ej: Test 1"; nI.value=subData.name??""; nI.oninput=syncDetailToData;
+      const gI = document.createElement("input"); gI.type="text"; gI.inputMode="decimal"; gI.placeholder="Ej: 55 ó 5,5"; gI.value=subData.grade??""; gI.oninput=syncDetailToData;
 
-      const tdG = document.createElement("td");
-      const g = document.createElement("input");
-      g.type = "text";
-      g.inputMode = "decimal";
-      g.placeholder = "Ej: 65 ó 6,5";
-      g.value = subData.grade ?? "";
-      g.oninput = syncDetailToData;
-      tdG.append(g);
+      const pW = document.createElement("div"); pW.className="percent-wrapper";
+      const pI = document.createElement("input"); pI.type="text"; pI.inputMode="decimal"; pI.placeholder="Ej: 25"; pI.value=subData.percent??""; pI.oninput=syncDetailToData;
+      const pS = document.createElement("span"); pS.textContent="%";
+      pW.append(pI, pS);
 
-      const tdP = document.createElement("td");
-      const wrap = document.createElement("div");
-      wrap.className = "percent-wrapper";
-      const p = document.createElement("input");
-      p.type = "text";
-      p.inputMode = "decimal";
-      p.placeholder = "Ej: 25";
-      p.value = subData.percent ?? "";
-      p.oninput = syncDetailToData;
-      const pct = document.createElement("span");
-      pct.textContent = "%";
-      wrap.append(p, pct);
-      tdP.append(wrap);
+      const dB = document.createElement("button"); dB.className="btn-danger btn-mini"; dB.textContent="✕";
+      dB.onclick = () => { tr.remove(); syncDetailToData(); };
 
-      const tdA = document.createElement("td");
-      const del = document.createElement("button");
-      del.className = "btn-danger btn-mini";
-      del.textContent = "X";
-      del.onclick = () => { tr.remove(); syncDetailToData(); };
-      tdA.append(del);
-
-      tr.append(tdN, tdG, tdP, tdA);
+      tr.append(mkC(nI), mkC(gI), mkC(pW), mkC(dB));
       subTbody.append(tr);
     }
 
-    /* =========================
-       SYNC UI -> DATA + UI calc + save (debounced)
-    ========================= */
+    /* ──────────────────────────────
+       SYNC UI → DATA
+    ────────────────────────────── */
     function syncDetailToData(initial = false) {
-      if (selectedSemesterIndex === null) return;
-      const sem = semestersData[selectedSemesterIndex];
+      if (selectedIdx === null) return;
+      const sem  = semestersData[selectedIdx];
       const root = semesterDetailEl.querySelector(".semester-card");
       if (!root || !sem) return;
 
-      // Semestre
       sem.name = root.querySelector(".semester-header input[type='text']").value;
+      sem.useWeights = !!root.querySelector(".toggle input[type='checkbox']").checked;
 
-      // Toggle ponderar por créditos
-      const toggleCb = root.querySelector(".toggle input[type='checkbox']");
-      sem.useWeights = !!toggleCb.checked;
-
-      // Subjects
       const subjects = [];
-      const subjectCards = Array.from(root.querySelectorAll(".subject-card"));
+      for (const sc of root.querySelectorAll(".subject-card")) {
+        const hInputs = sc.querySelectorAll(".subject-header input");
+        const sub = { name: hInputs[0]?.value ?? "", weight: hInputs[1]?.value ?? "", evaluations: [] };
 
-      for (const sc of subjectCards) {
-        const headerInputs = sc.querySelectorAll(".subject-header input");
-        const subName = headerInputs[0]?.value ?? "";
-        const subWeight = headerInputs[1]?.value ?? "";
-
-        const sub = { name: subName, weight: subWeight, evaluations: [] };
-
-        // Evaluations: cada evaluación ocupa 2 filas (principal + details)
         const rows = Array.from(sc.querySelectorAll("tbody > tr"));
         for (let i = 0; i < rows.length; i++) {
           const r = rows[i];
           const tds = r.querySelectorAll("td");
           if (tds.length === 5) {
-            const evName = tds[0].querySelector("input")?.value ?? "";
-            const evGrade = tds[1].querySelector("input")?.value ?? "";
+            const evName    = tds[0].querySelector("input")?.value ?? "";
+            const evGrade   = tds[1].querySelector("input")?.value ?? "";
             const evPercent = tds[2].querySelector("input")?.value ?? "";
             const evUseSubs = tds[3].querySelector("input[type='checkbox']")?.checked ?? false;
 
             const detailsRow = rows[i + 1];
             let subs = [];
             if (detailsRow) {
-              const subRows = Array.from(detailsRow.querySelectorAll("tbody tr"));
-              subs = subRows.map(sr => {
+              subs = Array.from(detailsRow.querySelectorAll("tbody tr")).map(sr => {
                 const ins = sr.querySelectorAll("input");
                 return { name: ins[0]?.value ?? "", grade: ins[1]?.value ?? "", percent: ins[2]?.value ?? "" };
               });
             }
 
-            sub.evaluations.push({
-              name: evName,
-              grade: evGrade,
-              percent: evPercent,
-              useSubs: !!evUseSubs,
-              subs: subs.length ? subs : [emptySubEval()]
-            });
-
-            i++; // saltar detailsRow
+            sub.evaluations.push({ name: evName, grade: evGrade, percent: evPercent,
+              useSubs: !!evUseSubs, subs: subs.length ? subs : [emptySubEval()] });
+            i++;
           }
         }
-
         subjects.push(sub);
 
-        // UI: promedio ramo + suma % + tag
+        /* ── Update subject card UI ── */
         const res = computeSubject(sub);
-        const avgEl = sc.querySelector(".subject-average");
-        const sumEl = sc.querySelector(".subject-weight");
-        const tagEl = sc.querySelector(".subject-tag");
 
-        const sumP = res.sumPercent || 0;
-        sumEl.textContent = `${safeFixed(sumP, 1)}%`;
+        // Left border color
+        sc.className = "subject-card" + (res.avg !== null ? " " + gradeClass(res.avg) : "");
 
-        if (res.avg === null) {
-          avgEl.textContent = "-";
-          tagEl.textContent = "";
-          tagEl.className = "subject-tag tag";
+        // Average display
+        const avgEl  = sc.querySelector(".subject-average");
+        const avgSub = sc.querySelector(".subject-average-sub");
+        if (res.avg !== null) {
+          avgEl.textContent = safeFixed(res.rounded1, 1);
+          avgEl.style.color = gradeColor(res.rounded1);
+          avgSub.textContent = `Exacto: ${safeFixed(res.avg, 2)}`;
         } else {
-          avgEl.innerHTML = `Normal: ${safeFixed(res.avg, 2)}<br>Redondeado (1 decimal): <strong>${safeFixed(res.rounded1, 1)}</strong>`;
+          avgEl.textContent = "—"; avgEl.style.color = ""; avgSub.textContent = "";
+        }
 
-          const ok = Math.abs(sumP - 100) <= PERCENT_TOLERANCE;
-          if (ok) {
-            tagEl.textContent = "OK";
-            tagEl.className = "subject-tag tag tag-ok";
+        // Progress bar
+        const sumP   = res.sumPercent || 0;
+        const fill   = sc.querySelector(".progress-fill");
+        const pLabel = sc.querySelector(".progress-label");
+        if (fill) {
+          const pct = Math.min(sumP, 100);
+          fill.style.width = pct + "%";
+          const over = sumP > 100 + PCT_TOLERANCE;
+          const ok   = Math.abs(sumP - 100) <= PCT_TOLERANCE;
+          fill.style.background = ok ? "var(--success)" : over ? "var(--danger)" : "var(--accent)";
+          pLabel.textContent = safeFixed(sumP, 1) + "%" + (ok ? " ✓" : "");
+          pLabel.className   = "progress-label" + (ok ? " ok" : over ? " bad" : "");
+        }
+
+        // Needed grade box
+        const neededVal = sc.querySelector(".needed-value");
+        const neededSub = sc.querySelector(".needed-sub");
+        if (neededVal) {
+          const needed = computeNeeded(sub);
+          if (needed === null) {
+            // No hay evaluaciones pendientes
+            if (res.avg !== null) {
+              neededVal.textContent = res.avg >= PASS_GRADE ? "✓" : "✗";
+              neededVal.style.color = res.avg >= PASS_GRADE ? "var(--success)" : "var(--danger)";
+              neededSub.textContent = res.avg >= PASS_GRADE ? "Aprobado" : "Reprobado";
+            } else {
+              neededVal.textContent = "—"; neededVal.style.color = ""; neededSub.textContent = "";
+            }
+          } else if (needed <= 1.0 || (res.avg !== null && res.avg >= PASS_GRADE)) {
+            neededVal.textContent = "✓";
+            neededVal.style.color = "var(--success)";
+            neededSub.textContent = "Ya aprobado";
+          } else if (needed > GRADE_MAX) {
+            neededVal.textContent = "Impos.";
+            neededVal.style.color = "var(--grade-fail)";
+            neededSub.textContent = "No alcanza con 7.0";
           } else {
-            tagEl.textContent = "No suma 100%";
-            tagEl.className = "subject-tag tag tag-bad";
+            neededVal.textContent = needed.toFixed(1);
+            neededVal.style.color = gradeColor(needed);
+            neededSub.textContent = `en notas faltantes`;
           }
         }
       }
 
       sem.subjects = subjects;
 
-      // UI: promedio semestre
+      /* ── Semester footer ── */
       const semAvg = computeSemester(sem);
-      const semAvgEl = root.querySelector(".semester-average");
+      const semAvgEl  = root.querySelector(".semester-average");
+      const semAvgSub = root.querySelector(".semester-average-sub");
       if (semAvg) {
-        semAvgEl.innerHTML = `Normal: ${safeFixed(semAvg.normal, 2)}<br>Con redondeados (1 decimal): <strong>${safeFixed(semAvg.rounded, 1)}</strong>`;
+        semAvgEl.textContent = safeFixed(semAvg.rounded, 1);
+        semAvgEl.style.color = gradeColor(semAvg.rounded);
+        semAvgSub.textContent = `Exacto: ${safeFixed(semAvg.normal, 2)}`;
       } else {
-        semAvgEl.textContent = "-";
+        semAvgEl.textContent = "—"; semAvgEl.style.color = ""; semAvgSub.textContent = "";
       }
 
-      // Guardado + repintado liviano
       scheduleSave();
       scheduleLightRender();
     }
 
-    /* =========================
-       GLOBAL UI
-    ========================= */
+    /* ──────────────────────────────
+       GLOBAL AVERAGE
+    ────────────────────────────── */
     function renderGlobalAverage() {
       const g = computeGlobal();
       if (!g) {
-        globalAverageEl.textContent = "-";
+        globalNormalEl.textContent = "—"; globalNormalEl.style.color = "";
+        globalRoundedEl.textContent = "—"; globalRoundedEl.style.color = "";
         return;
       }
-      globalAverageEl.innerHTML =
-        `Normal: ${safeFixed(g.normal, 2)}<br>Con redondeados (1 decimal): <strong>${safeFixed(g.rounded, 1)}</strong>`;
+      globalNormalEl.textContent  = safeFixed(g.normal, 2);
+      globalNormalEl.style.color  = gradeColor(g.normal);
+      globalRoundedEl.textContent = safeFixed(g.rounded, 1);
+      globalRoundedEl.style.color = gradeColor(g.rounded);
     }
 
-    /* =========================
-       AUTH + SYNC
-    ========================= */
-    loginBtn.onclick = () => {
-      signInWithPopup(auth, provider).catch(err => {
-        console.error("Error login:", err);
-        alert("No se pudo iniciar sesión con Google. Revisa los dominios autorizados en Firebase.");
-      });
-    };
-
+    /* ──────────────────────────────
+       AUTH
+    ────────────────────────────── */
+    loginBtn.onclick  = () => signInWithPopup(auth, provider).catch(e => { console.error(e); toast("No se pudo iniciar sesión.", "err"); });
     logoutBtn.onclick = () => signOut(auth);
 
     onAuthStateChanged(auth, async (u) => {
       currentUser = u;
-
       if (u) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userInfoEl.textContent = "Sesión Google: " + (u.displayName || u.email) + " (sincronizado)";
+        loginBtn.style.display = "none"; logoutBtn.style.display = "inline-block";
+        userInfoEl.textContent = "Google: " + (u.displayName || u.email);
+        setSyncDot("saving");
       } else {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        userInfoEl.textContent = "Modo local (sin sesión)";
+        loginBtn.style.display = "inline-block"; logoutBtn.style.display = "none";
+        userInfoEl.textContent = "Modo local";
+        setSyncDot("local");
       }
 
       const local = loadFromLocal();
-
       if (!u) {
         semestersData = local.semesters || [];
-        renderSemesterList();
-        renderGlobalAverage();
-        showListView();
-        return;
+        renderSemesterList(); renderGlobalAverage(); showListView(); return;
       }
 
-      const remote = await loadFromRemote(u);
+      const remote  = await loadFromRemote(u);
       const localTs = local.updatedAtLocal || 0;
-      const remoteTs = remote ? Math.max(remote.updatedAtLocal || 0, remote.updatedAtRemoteMs || 0) : 0;
+      const remotTs = remote ? Math.max(remote.updatedAtLocal || 0, remote.updatedAtRemoteMs || 0) : 0;
 
       if (!remote) {
         semestersData = local.semesters || [];
         await saveData();
-      } else if (localTs > remoteTs) {
+      } else if (localTs > remotTs) {
         semestersData = local.semesters || [];
         await saveData();
       } else {
         semestersData = remote.semesters || [];
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ semesters: semestersData, updatedAtLocal: Date.now() }));
+        localStorage.setItem(LOCAL_KEY, JSON.stringify({ semesters: semestersData, updatedAtLocal: Date.now() }));
       }
 
-      renderSemesterList();
-      renderGlobalAverage();
-      showListView();
+      setSyncDot("synced");
+      renderSemesterList(); renderGlobalAverage(); showListView();
     });
 
-    /* =========================
+    /* ──────────────────────────────
        BUTTONS
-    ========================= */
+    ────────────────────────────── */
     addSemesterBtn.onclick = () => {
       semestersData.push(emptySemester());
-      scheduleSave();
-      renderSemesterList();
-      renderGlobalAverage();
+      scheduleSave(); renderSemesterList(); renderGlobalAverage();
     };
 
     recalcAllBtn.onclick = () => {
-      renderSemesterList();
-      renderGlobalAverage();
+      renderSemesterList(); renderGlobalAverage();
       if (viewDetail.style.display === "block") renderSemesterDetail();
     };
 
     clearAllBtn.onclick = async () => {
-      if (!confirm("¿Seguro?")) return;
+      if (!confirm("¿Borrar todo? Esta acción no se puede deshacer.")) return;
       semestersData = [];
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem(LOCAL_KEY);
       await clearRemote();
-      renderSemesterList();
-      renderGlobalAverage();
-      showListView();
+      renderSemesterList(); renderGlobalAverage(); showListView();
     };
 
-    backBtn.onclick = () => {
-      syncDetailToData();
-      showListView();
-    };
+    backBtn.onclick = () => { syncDetailToData(); showListView(); };
 
-    deleteSemesterDetailBtn.onclick = async () => {
+    delSemBtn.onclick = async () => {
       if (!confirm("¿Eliminar semestre?")) return;
-      semestersData.splice(selectedSemesterIndex, 1);
-      selectedSemesterIndex = null;
+      semestersData.splice(selectedIdx, 1);
+      selectedIdx = null;
       await saveData();
-      renderSemesterList();
-      renderGlobalAverage();
-      showListView();
+      renderSemesterList(); renderGlobalAverage(); showListView();
     };
 
-    /* =========================
+    /* ──────────────────────────────
        EXPORT / IMPORT
-    ========================= */
+    ────────────────────────────── */
     exportBtn.onclick = () => {
-      const payload = { version: 1, exportedAt: new Date().toISOString(), semesters: semestersData };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "promedios_backup.json";
-      a.click();
-      URL.revokeObjectURL(url);
+      const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), semesters: semestersData }, null, 2)], { type: "application/json" });
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement("a"), { href: url, download: "promedios_backup.json" });
+      a.click(); URL.revokeObjectURL(url);
+      toast("Exportado correctamente ✓", "ok");
     };
 
     importFile.onchange = async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
       try {
-        const text = await file.text();
-        const data = JSON.parse(text);
+        const data     = JSON.parse(await file.text());
         const imported = Array.isArray(data.semesters) ? data.semesters : null;
-        if (!imported) { alert("JSON inválido (no viene 'semesters')."); return; }
+        if (!imported) { toast("JSON inválido (falta 'semesters')", "err"); return; }
         if (!confirm("Esto reemplazará tus datos actuales. ¿Continuar?")) return;
-
         semestersData = imported;
         await saveData();
-        renderSemesterList();
-        renderGlobalAverage();
-        showListView();
+        renderSemesterList(); renderGlobalAverage(); showListView();
+        toast("Importado correctamente ✓", "ok");
       } catch (err) {
         console.error(err);
-        alert("No se pudo importar. Revisa el archivo.");
-      } finally {
-        importFile.value = "";
-      }
+        toast("No se pudo importar el archivo.", "err");
+      } finally { importFile.value = ""; }
     };
 
-    /* =========================
-       INITIAL LOAD (local)
-    ========================= */
-    (function bootstrap() {
+    /* ──────────────────────────────
+       BOOTSTRAP
+    ────────────────────────────── */
+    (function init() {
       const local = loadFromLocal();
       semestersData = local.semesters || [];
-      renderSemesterList();
-      renderGlobalAverage();
-      showListView();
+      renderSemesterList(); renderGlobalAverage(); showListView();
     })();
   </script>
 
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/Promedionotas/sw.js')
-          .catch(err => console.log('SW error:', err));
-      });
+      window.addEventListener('load', () =>
+        navigator.serviceWorker.register('/Promedionotas/sw.js').catch(e => console.log('SW:', e))
+      );
     }
   </script>
 </body>
