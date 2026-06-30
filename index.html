@@ -879,7 +879,8 @@
 
       const gIn = document.createElement("input");
       gIn.type = "text"; gIn.inputMode = "decimal"; gIn.placeholder = "Ej: 55 ó 5,5";
-      gIn.value = evData.grade ?? ""; gIn.oninput = syncDetailToData;
+      gIn.value = evData.grade ?? "";
+      gIn.oninput = () => { delete gIn.dataset.fromSubs; gIn.style.color = ""; syncDetailToData(); };
 
       const pWrap = document.createElement("div");
       pWrap.className = "percent-wrapper";
@@ -994,8 +995,11 @@
           const r = rows[i];
           const tds = r.querySelectorAll("td");
           if (tds.length === 5) {
+            const gradeInput = tds[1].querySelector("input");
+            const isAutoFilled = !!gradeInput?.dataset.fromSubs;
+
             const evName    = tds[0].querySelector("input")?.value ?? "";
-            const evGrade   = tds[1].querySelector("input")?.value ?? "";
+            const evGrade   = isAutoFilled ? "" : (gradeInput?.value ?? "");
             const evPercent = tds[2].querySelector("input")?.value ?? "";
             const evUseSubs = tds[3].querySelector("input[type='checkbox']")?.checked ?? false;
 
@@ -1010,6 +1014,28 @@
 
             sub.evaluations.push({ name: evName, grade: evGrade, percent: evPercent,
               useSubs: !!evUseSubs, subs: subs.length ? subs : [emptySubEval()] });
+
+            // Auto-rellenar el campo de nota con el promedio calculado de sub-evaluaciones
+            if (!evGrade && gradeInput) {
+              let tot = 0, w = 0;
+              for (const s of subs) {
+                const g = parseGrade(s.grade), p = parsePercent(s.percent);
+                if (Number.isFinite(g) && Number.isFinite(p)) { tot += p; w += g * p; }
+              }
+              if (tot > 0) {
+                const computed = (w / tot);
+                gradeInput.value = computed.toFixed(2);
+                gradeInput.dataset.fromSubs = "1";
+                gradeInput.style.color = "var(--text-soft)";
+                gradeInput.style.fontStyle = "italic";
+              } else if (isAutoFilled) {
+                gradeInput.value = "";
+                delete gradeInput.dataset.fromSubs;
+                gradeInput.style.color = "";
+                gradeInput.style.fontStyle = "";
+              }
+            }
+
             i++;
           }
         }
