@@ -519,10 +519,12 @@
     function evalGrade(ev) {
       if (!ev?.useSubs) {
         const g = parseGrade(ev?.grade);
-        return Number.isFinite(g) ? g : NaN;
+        // Si la nota principal está llena, usarla directamente
+        if (Number.isFinite(g)) return g;
+        // Si está vacía pero hay sub-evaluaciones con datos, calcular desde ellas
       }
       let tot = 0, w = 0;
-      for (const s of (ev.subs || [])) {
+      for (const s of (ev?.subs || [])) {
         const g = parseGrade(s.grade), p = parsePercent(s.percent);
         if (Number.isFinite(g) && Number.isFinite(p)) { tot += p; w += g * p; }
       }
