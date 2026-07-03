@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Promedios nms</title>
+  <title>Promedios NMS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Calculadora de promedios universitarios (escala 1.0–7.0)" />
   <link rel="manifest" href="/Promedionotas/manifest.json">
   <meta name="theme-color" content="#080811">
   <link rel="icon" href="/Promedionotas/icons/icon-192.png">
@@ -24,6 +25,7 @@
       --accent: #5b5bd6;
       --accent-hover: #7070e8;
       --accent-glow: rgba(91,91,214,0.18);
+      --chart-line: #6d79f0;
       --danger: #e54545;
       --danger-soft: rgba(229,69,69,0.1);
       --success: #22c55e;
@@ -41,21 +43,29 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; padding: 0; color: var(--text); min-height: 100vh;
+      background: var(--bg);
+      background-image:
+        radial-gradient(1200px 500px at 50% -10%, rgba(91,91,214,0.10), transparent 60%),
+        radial-gradient(900px 400px at 90% 110%, rgba(109,121,240,0.05), transparent 60%);
+      background-attachment: fixed;
+    }
 
-    .app { max-width: 920px; margin: 0 auto; padding: 16px 16px 60px; }
+    .app { max-width: 940px; margin: 0 auto; padding: 16px 16px calc(60px + env(safe-area-inset-bottom)); }
 
     /* ── Header ── */
-    .app-header { text-align: center; padding: 28px 0 18px; }
+    .app-header { text-align: center; padding: 30px 0 20px; }
     .app-header h1 {
       margin: 0;
-      font-size: 1.9rem;
+      font-size: 2rem;
       font-weight: 900;
       letter-spacing: -0.5px;
       background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 50%, #6366f1 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .app-header p { margin: 5px 0 0; font-size: 0.78rem; color: var(--text-muted); }
+    .app-header p { margin: 6px 0 0; font-size: 0.8rem; color: var(--text-soft); }
 
     /* ── Auth bar ── */
     .auth-bar {
@@ -67,11 +77,11 @@
     }
     .auth-status { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-soft); }
     .sync-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted);
-      flex-shrink: 0; transition: background 0.3s;
+      width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted);
+      flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s;
     }
-    .sync-dot.local  { background: var(--warning); }
-    .sync-dot.synced { background: var(--success); }
+    .sync-dot.local  { background: var(--warning); box-shadow: 0 0 6px rgba(245,158,11,.5); }
+    .sync-dot.synced { background: var(--success); box-shadow: 0 0 6px rgba(34,197,94,.5); }
     .sync-dot.saving { background: var(--accent); animation: blink 1s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
     .auth-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -81,9 +91,12 @@
       border: none; border-radius: 999px;
       padding: 8px 16px; font-size: 0.85rem;
       cursor: pointer; font-weight: 600; transition: all 0.15s; letter-spacing: 0.01em;
+      font-family: inherit;
     }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .btn-primary  { background: var(--accent); color: #fff; box-shadow: 0 2px 10px rgba(91,91,214,.3); }
     .btn-primary:hover  { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
     .btn-secondary{ background: var(--border-light); color: var(--text); border: 1px solid var(--border); }
     .btn-secondary:hover{ background: #2a2a42; }
     .btn-danger   { background: transparent; color: var(--danger); border: 1px solid rgba(229,69,69,.3); }
@@ -103,27 +116,47 @@
     }
     .import-label:hover { background: #2a2a42; }
 
-    /* ── Global stats ── */
-    .global-box {
-      margin: 20px 0;
-      padding: 20px 22px;
-      border-radius: var(--r);
-      background: linear-gradient(135deg, #0f0f1e, #161628);
-      border: 1px solid var(--border-light);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+    /* ── KPI row ── */
+    .kpi-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 10px; margin: 20px 0 12px;
     }
-    @media (max-width: 440px) { .global-box { grid-template-columns: 1fr; } }
-    .global-stat-label {
-      font-size: 0.68rem; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px;
+    @media (max-width: 640px) { .kpi-row { grid-template-columns: 1fr 1fr; } }
+    .kpi {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 3px;
+      transition: border-color .2s;
     }
-    .global-stat-value {
-      font-size: 2.2rem; font-weight: 900; line-height: 1;
-      transition: color 0.4s;
+    .kpi:hover { border-color: var(--border-light); }
+    .kpi-label {
+      font-size: 0.66rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .07em;
     }
-    .global-stat-sub { font-size: 0.72rem; color: var(--text-soft); margin-top: 4px; }
+    .kpi-value { font-size: 1.9rem; font-weight: 800; line-height: 1.1; transition: color .4s; }
+    .kpi.kpi-hero .kpi-value { font-size: 2.3rem; font-weight: 900; }
+    .kpi-sub { font-size: 0.7rem; color: var(--text-soft); }
+
+    /* ── Trend chart card ── */
+    .chart-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 16px 8px;
+      margin-bottom: 16px; position: relative;
+    }
+    .chart-title { font-size: 0.8rem; font-weight: 700; color: var(--text-soft); margin: 0 0 2px; }
+    .chart-sub   { font-size: 0.68rem; color: var(--text-muted); margin: 0 0 8px; }
+    .chart-card svg { display: block; width: 100%; touch-action: pan-y; }
+    .chart-card svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--rs); }
+    .chart-tooltip {
+      position: absolute; pointer-events: none; z-index: 20;
+      background: #181830; border: 1px solid var(--border-light);
+      border-radius: var(--rs); padding: 7px 10px;
+      font-size: 0.75rem; color: var(--text-soft);
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+      display: none; min-width: 110px;
+    }
+    .chart-tooltip .tt-name { color: var(--text); font-weight: 700; margin-bottom: 3px; }
+    .chart-tooltip .tt-val strong { color: var(--text); font-size: 0.9rem; }
 
     /* ── Semester list ── */
     .semester-list { display: flex; flex-direction: column; gap: 10px; }
@@ -132,9 +165,10 @@
       background: var(--card); border: 1px solid var(--border);
       border-radius: var(--r); padding: 14px 16px;
       display: flex; justify-content: space-between; align-items: center;
-      gap: 12px; transition: border-color .2s;
+      gap: 12px; transition: border-color .2s, transform .15s;
+      cursor: pointer;
     }
-    .semester-list-card:hover { border-color: var(--border-light); }
+    .semester-list-card:hover { border-color: var(--accent); transform: translateY(-1px); }
     .semester-list-left { flex: 1; min-width: 0; }
     .semester-list-name { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 5px; }
     .semester-list-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -142,8 +176,9 @@
     .grade-badge {
       display: inline-flex; align-items: center; padding: 3px 9px;
       border-radius: 999px; font-size: 0.8rem; font-weight: 800;
+      background: rgba(0,0,0,.3);
     }
-    .semester-list-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .semester-list-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 
     /* ── Semester detail card ── */
     .semester-card {
@@ -152,15 +187,18 @@
       display: flex; flex-direction: column; gap: 14px;
     }
     .semester-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .semester-header input[type="text"] { flex: 1; min-width: 180px; }
 
     /* ── Inputs ── */
-    input[type="text"], input[type="number"] {
+    input[type="text"], input[type="number"], select {
       width: 100%; padding: 7px 10px;
       border-radius: var(--rx); border: 1px solid var(--input-border);
       background: var(--input-bg); color: var(--text); font-size: .875rem;
       transition: border-color .15s, box-shadow .15s;
+      font-family: inherit;
     }
-    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    select { width: auto; cursor: pointer; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
 
     .toggle {
       display: inline-flex; align-items: center; gap: 8px;
@@ -171,6 +209,12 @@
     }
     .toggle:hover { border-color: var(--accent); }
     .toggle input { width: auto; accent-color: var(--accent); }
+
+    .target-wrap {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .78rem; color: var(--text-soft);
+    }
+    .target-wrap select { padding: 4px 8px; font-size: .8rem; border-radius: 999px; }
 
     /* ── Subjects ── */
     .semester-subjects { display: flex; flex-direction: column; gap: 12px; }
@@ -297,6 +341,7 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
     }
+    .detail-topbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     /* ── Toast ── */
     .toast-container {
@@ -316,20 +361,56 @@
     @keyframes tIn  { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:none} }
     @keyframes tOut { from{opacity:1} to{opacity:0;pointer-events:none} }
 
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 5000;
+      background: rgba(4,4,10,.65); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border-light);
+      border-radius: var(--r); padding: 22px;
+      max-width: 360px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.7);
+      animation: mIn .18s ease;
+    }
+    @keyframes mIn { from{opacity:0;transform:scale(.96) translateY(8px)} to{opacity:1;transform:none} }
+    .modal-title { font-size: 1rem; font-weight: 800; margin: 0 0 6px; }
+    .modal-msg   { font-size: .85rem; color: var(--text-soft); margin: 0 0 18px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
     /* ── Empty state ── */
     .empty-msg { text-align: center; margin: 48px 0; color: var(--text-muted); }
     .empty-msg strong { display: block; font-size: 1.1rem; color: var(--text-soft); margin-bottom: 6px; }
 
     .view { margin-bottom: 16px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+      html { scroll-behavior: auto; }
+    }
   </style>
 </head>
 
 <body>
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- Confirm modal -->
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h2 class="modal-title" id="modalTitle">Confirmar</h2>
+      <p class="modal-msg" id="modalMsg"></p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="modalCancel">Cancelar</button>
+        <button class="btn-danger" id="modalOk">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="app">
     <div class="app-header">
-      <h1>Promedios nms</h1>
+      <h1>Promedios NMS</h1>
       <p>Calculadora de notas universitarias — pasa con 4.0</p>
     </div>
 
@@ -347,7 +428,6 @@
     <div id="viewList" class="view">
       <div class="top-bar">
         <button class="btn-primary" id="addSemesterBtn">+ Agregar semestre</button>
-        <button class="btn-secondary" id="recalcAllBtn">Recalcular</button>
         <button class="btn-secondary" id="exportBtn">Exportar JSON</button>
         <label class="import-label">
           Importar JSON
@@ -355,28 +435,59 @@
         </label>
         <button class="btn-danger btn-mini" id="clearAllBtn">Borrar todo</button>
       </div>
+
+      <!-- KPI row -->
+      <div class="kpi-row">
+        <div class="kpi kpi-hero">
+          <div class="kpi-label">Promedio global</div>
+          <div class="kpi-value" id="globalRounded">—</div>
+          <div class="kpi-sub">Redondeado (1 decimal por ramo)</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Promedio exacto</div>
+          <div class="kpi-value" id="globalNormal">—</div>
+          <div class="kpi-sub">Sin redondear</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Ramos aprobados</div>
+          <div class="kpi-value" id="kpiApproved">—</div>
+          <div class="kpi-sub" id="kpiApprovedSub">Con nota ≥ 4.0</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Semestres</div>
+          <div class="kpi-value" id="kpiSemesters">0</div>
+          <div class="kpi-sub" id="kpiSemestersSub">registrados</div>
+        </div>
+      </div>
+
+      <!-- Trend chart -->
+      <div class="chart-card" id="chartCard" style="display:none;">
+        <p class="chart-title">Evolución del promedio por semestre</p>
+        <p class="chart-sub">Promedio redondeado de cada semestre · la línea verde marca el 4.0 de aprobación</p>
+        <div id="chartHost"></div>
+        <div class="chart-tooltip" id="chartTooltip"></div>
+      </div>
+
       <div id="semesterList" class="semester-list"></div>
     </div>
 
     <div id="viewDetail" class="view" style="display:none;">
       <div class="detail-topbar">
         <button class="btn-ghost btn-mini" id="backBtn">← Volver</button>
-        <button class="btn-danger btn-mini" id="deleteSemesterDetailBtn">Eliminar semestre</button>
+        <div class="detail-topbar-right">
+          <label class="target-wrap">Meta
+            <select id="targetSelect">
+              <option value="4.0">4.0 (aprobar)</option>
+              <option value="4.5">4.5</option>
+              <option value="5.0">5.0</option>
+              <option value="5.5">5.5</option>
+              <option value="6.0">6.0</option>
+            </select>
+          </label>
+          <button class="btn-danger btn-mini" id="deleteSemesterDetailBtn">Eliminar semestre</button>
+        </div>
       </div>
       <div id="semesterDetail"></div>
-    </div>
-
-    <div class="global-box">
-      <div>
-        <div class="global-stat-label">Promedio global exacto</div>
-        <div class="global-stat-value" id="globalNormal">—</div>
-        <div class="global-stat-sub">Sin redondear</div>
-      </div>
-      <div>
-        <div class="global-stat-label">Promedio global redondeado</div>
-        <div class="global-stat-value" id="globalRounded">—</div>
-        <div class="global-stat-sub">Con 1 decimal por ramo</div>
-      </div>
     </div>
   </div>
 
@@ -396,10 +507,11 @@
     };
 
     const LOCAL_KEY    = "promedios_semestres_clean_v2";
+    const TARGET_KEY   = "promedios_target";
     const SAVE_DELAY   = 350;
     const GRADE_MIN    = 1.0;
     const GRADE_MAX    = 7.0;
-    const PASS_GRADE   = 4.0;   // nota de aprobación
+    const PASS_GRADE   = 4.0;
     const PCT_TOLERANCE = 1.0;
 
     /* ── FIREBASE ── */
@@ -415,17 +527,28 @@
     const semesterDetailEl = document.getElementById("semesterDetail");
     const globalNormalEl   = document.getElementById("globalNormal");
     const globalRoundedEl  = document.getElementById("globalRounded");
+    const kpiApprovedEl    = document.getElementById("kpiApproved");
+    const kpiApprovedSubEl = document.getElementById("kpiApprovedSub");
+    const kpiSemestersEl   = document.getElementById("kpiSemesters");
+    const kpiSemestersSubEl= document.getElementById("kpiSemestersSub");
+    const chartCard        = document.getElementById("chartCard");
+    const chartHost        = document.getElementById("chartHost");
+    const chartTooltip     = document.getElementById("chartTooltip");
     const syncDotEl        = document.getElementById("syncDot");
     const userInfoEl       = document.getElementById("userInfo");
     const loginBtn         = document.getElementById("loginBtn");
     const logoutBtn        = document.getElementById("logoutBtn");
     const addSemesterBtn   = document.getElementById("addSemesterBtn");
-    const recalcAllBtn     = document.getElementById("recalcAllBtn");
     const clearAllBtn      = document.getElementById("clearAllBtn");
     const backBtn          = document.getElementById("backBtn");
     const delSemBtn        = document.getElementById("deleteSemesterDetailBtn");
     const exportBtn        = document.getElementById("exportBtn");
     const importFile       = document.getElementById("importFile");
+    const targetSelect     = document.getElementById("targetSelect");
+    const modalOverlay     = document.getElementById("modalOverlay");
+    const modalMsg         = document.getElementById("modalMsg");
+    const modalOk          = document.getElementById("modalOk");
+    const modalCancel      = document.getElementById("modalCancel");
 
     /* ── STATE ── */
     let currentUser = null;
@@ -433,6 +556,8 @@
     let selectedIdx = null;
     let saveTimer = null;
     let lightTimer = null;
+    let targetGrade = parseFloat(localStorage.getItem(TARGET_KEY)) || PASS_GRADE;
+    targetSelect.value = targetGrade.toFixed(1);
 
     /* ──────────────────────────────
        HELPERS
@@ -459,7 +584,6 @@
 
     function safeFixed(v, n = 2) { return Number.isFinite(v) ? v.toFixed(n) : "—"; }
 
-    /* Grade class + color helpers */
     function gradeClass(g) {
       if (!Number.isFinite(g)) return "";
       if (g < 4.0) return "gc-fail";
@@ -486,10 +610,29 @@
       setTimeout(() => t.remove(), 2900);
     }
 
-    /* Sync dot state */
-    function setSyncDot(state) {
-      syncDotEl.className = "sync-dot " + state;
+    /* Confirm modal (reemplaza window.confirm) */
+    let modalResolve = null;
+    function confirmDialog(msg, okText = "Eliminar") {
+      return new Promise(resolve => {
+        modalResolve = resolve;
+        modalMsg.textContent = msg;
+        modalOk.textContent = okText;
+        modalOverlay.classList.add("open");
+        modalOk.focus();
+      });
     }
+    function closeModal(result) {
+      modalOverlay.classList.remove("open");
+      if (modalResolve) { modalResolve(result); modalResolve = null; }
+    }
+    modalOk.onclick     = () => closeModal(true);
+    modalCancel.onclick = () => closeModal(false);
+    modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(false); };
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalOverlay.classList.contains("open")) closeModal(false);
+    });
+
+    function setSyncDot(state) { syncDotEl.className = "sync-dot " + state; }
 
     function showListView()   { viewList.style.display = "block";  viewDetail.style.display = "none"; }
     function showDetailView() { viewList.style.display = "none";   viewDetail.style.display = "block"; }
@@ -502,7 +645,7 @@
 
     function scheduleLightRender() {
       clearTimeout(lightTimer);
-      lightTimer = setTimeout(() => { renderSemesterList(); renderGlobalAverage(); }, 200);
+      lightTimer = setTimeout(() => { renderSemesterList(); renderStats(); }, 200);
     }
 
     /* ──────────────────────────────
@@ -519,9 +662,7 @@
     function evalGrade(ev) {
       if (!ev?.useSubs) {
         const g = parseGrade(ev?.grade);
-        // Si la nota principal está llena, usarla directamente
         if (Number.isFinite(g)) return g;
-        // Si está vacía pero hay sub-evaluaciones con datos, calcular desde ellas
       }
       let tot = 0, w = 0;
       for (const s of (ev?.subs || [])) {
@@ -542,7 +683,7 @@
       return { avg, rounded1: round1(avg), sumPercent: tot };
     }
 
-    /* Nota necesaria para aprobar (o llegar a `target`) con las evaluaciones pendientes */
+    /* Nota necesaria para llegar a `target` con las evaluaciones pendientes */
     function computeNeeded(sub, target = PASS_GRADE) {
       let donePercent = 0, doneWeighted = 0;
       let pendingPercent = 0;
@@ -553,18 +694,15 @@
 
         const g = evalGrade(ev);
         if (Number.isFinite(g)) {
-          // Esta evaluación ya tiene nota
           donePercent   += p;
           doneWeighted  += g * p;
         } else {
-          // Evaluación pendiente (tiene % pero no nota)
           pendingPercent += p;
         }
       }
 
-      if (pendingPercent <= 1e-9) return null; // No hay pendientes
+      if (pendingPercent <= 1e-9) return null;
 
-      // needed * pendingPercent + doneWeighted = target * (donePercent + pendingPercent)
       const totalPct = donePercent + pendingPercent;
       const needed   = (target * totalPct - doneWeighted) / pendingPercent;
       return needed;
@@ -603,8 +741,22 @@
       }
       if (!c) return null;
       const anyWeights = Math.abs(sumW - c) > 1e-9;
-      if (anyWeights) return { normal: sumNW / sumW, rounded: sumRW / sumW };
-      return { normal: sumN / c, rounded: sumR / c };
+      if (anyWeights) return { normal: sumNW / sumW, rounded: sumRW / sumW, count: c };
+      return { normal: sumN / c, rounded: sumR / c, count: c };
+    }
+
+    function computeCounts() {
+      let approved = 0, failed = 0, total = 0;
+      for (const sem of semestersData) {
+        for (const sub of (sem.subjects || [])) {
+          const r = computeSubject(sub);
+          if (r.avg !== null) {
+            total++;
+            if (r.rounded1 >= PASS_GRADE) approved++; else failed++;
+          }
+        }
+      }
+      return { approved, failed, total };
     }
 
     /* ──────────────────────────────
@@ -657,6 +809,16 @@
     /* ──────────────────────────────
        RENDER LIST
     ────────────────────────────── */
+    function semesterDisplayName(sem, idx) {
+      return sem.name?.trim() || `Semestre ${idx + 1}`;
+    }
+
+    function openSemester(idx) {
+      selectedIdx = idx;
+      renderSemesterDetail();
+      showDetailView();
+    }
+
     function renderSemesterList() {
       semesterListEl.innerHTML = "";
       if (!semestersData.length) {
@@ -666,13 +828,14 @@
       semestersData.forEach((sem, idx) => {
         const card = document.createElement("div");
         card.className = "semester-list-card";
+        card.onclick = (e) => { if (e.target.closest("button")) return; openSemester(idx); };
 
         const left = document.createElement("div");
         left.className = "semester-list-left";
 
         const name = document.createElement("div");
         name.className = "semester-list-name";
-        name.textContent = sem.name?.trim() || `Semestre ${idx + 1}`;
+        name.textContent = semesterDisplayName(sem, idx);
 
         const meta = document.createElement("div");
         meta.className = "semester-list-meta";
@@ -682,18 +845,19 @@
           const badge = document.createElement("span");
           badge.className = "grade-badge";
           const col = gradeColor(avg.rounded);
-          badge.style.cssText = `color:${col};background:${col.replace("var(", "var(--").replace("--grade-", "--").replace(")", "-bg)")};`;
-          // Simpler: just inline style
-          badge.style.background = "rgba(0,0,0,.3)";
-          badge.style.color = gradeColor(avg.rounded);
-          badge.style.border = `1px solid ${gradeColor(avg.rounded)}40`;
+          badge.style.color = col;
+          badge.style.border = `1px solid color-mix(in srgb, ${col} 30%, transparent)`;
           badge.textContent = safeFixed(avg.rounded, 1);
 
           const avgText = document.createElement("span");
           avgText.className = "semester-list-avg";
-          avgText.textContent = `Normal: ${safeFixed(avg.normal, 2)}`;
+          avgText.textContent = `Exacto: ${safeFixed(avg.normal, 2)}`;
 
-          meta.append(badge, avgText);
+          const stateTag = document.createElement("span");
+          stateTag.className = "tag " + (avg.rounded >= PASS_GRADE ? "tag-ok" : "tag-bad");
+          stateTag.textContent = avg.rounded >= PASS_GRADE ? "Aprobando" : "Bajo 4.0";
+
+          meta.append(badge, avgText, stateTag);
         } else {
           const avgText = document.createElement("span");
           avgText.className = "semester-list-avg";
@@ -709,20 +873,34 @@
         const openBtn = document.createElement("button");
         openBtn.className = "btn-primary btn-mini";
         openBtn.textContent = "Abrir";
-        openBtn.onclick = () => { selectedIdx = idx; renderSemesterDetail(); showDetailView(); };
+        openBtn.onclick = () => openSemester(idx);
+
+        const dupBtn = document.createElement("button");
+        dupBtn.className = "btn-secondary btn-mini";
+        dupBtn.textContent = "Duplicar";
+        dupBtn.title = "Crear una copia de este semestre";
+        dupBtn.onclick = () => {
+          const copy = JSON.parse(JSON.stringify(sem));
+          copy.id = uid();
+          copy.name = (semesterDisplayName(sem, idx)) + " (copia)";
+          semestersData.splice(idx + 1, 0, copy);
+          scheduleSave(); renderSemesterList(); renderStats();
+          toast("Semestre duplicado ✓", "ok");
+        };
 
         const delBtn = document.createElement("button");
         delBtn.className = "btn-danger btn-mini";
         delBtn.textContent = "Eliminar";
-        delBtn.onclick = () => {
-          if (!confirm("¿Eliminar semestre?")) return;
+        delBtn.onclick = async () => {
+          const ok = await confirmDialog(`¿Eliminar "${semesterDisplayName(sem, idx)}"? Esta acción no se puede deshacer.`);
+          if (!ok) return;
           semestersData.splice(idx, 1);
           scheduleSave();
           renderSemesterList();
-          renderGlobalAverage();
+          renderStats();
         };
 
-        actions.append(openBtn, delBtn);
+        actions.append(openBtn, dupBtn, delBtn);
         card.append(left, actions);
         semesterListEl.append(card);
       });
@@ -769,7 +947,11 @@
       const addSubBtn = document.createElement("button");
       addSubBtn.className = "btn-primary";
       addSubBtn.textContent = "+ Agregar asignatura";
-      addSubBtn.onclick = () => { buildSubjectCard(subs, emptySubject()); syncDetailToData(); };
+      addSubBtn.onclick = () => {
+        buildSubjectCard(subs, emptySubject());
+        syncDetailToData();
+        subs.lastElementChild?.querySelector("input")?.focus();
+      };
 
       /* footer */
       const footer = document.createElement("div");
@@ -814,12 +996,20 @@
       const addEv = document.createElement("button");
       addEv.className = "btn-secondary btn-mini";
       addEv.textContent = "+ Nota";
-      addEv.onclick = () => { addEvalRow(tbody, emptyEval()); syncDetailToData(); };
+      addEv.onclick = () => {
+        addEvalRow(tbody, emptyEval());
+        syncDetailToData();
+        tbody.querySelector("tr:nth-last-child(2) input")?.focus();
+      };
 
       const delSubBtn = document.createElement("button");
       delSubBtn.className = "btn-danger btn-mini";
       delSubBtn.textContent = "Eliminar ramo";
-      delSubBtn.onclick = () => { if (!confirm("¿Eliminar ramo?")) return; card.remove(); syncDetailToData(); };
+      delSubBtn.onclick = async () => {
+        const ok = await confirmDialog("¿Eliminar este ramo con todas sus notas?");
+        if (!ok) return;
+        card.remove(); syncDetailToData();
+      };
 
       acts.append(addEv, delSubBtn);
       hdr.append(nameIn, wtIn, acts);
@@ -873,6 +1063,21 @@
 
       const makeCell = (child) => { const td = document.createElement("td"); td.append(child); return td; };
 
+      /* Enter en la última fila agrega una nueva evaluación */
+      const enterAdds = (input) => {
+        input.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          const rows = tbody.querySelectorAll("tr");
+          const isLast = rows[rows.length - 2] === tr; // la fila de details va después
+          if (isLast) {
+            addEvalRow(tbody, emptyEval());
+            syncDetailToData();
+            tbody.querySelector("tr:nth-last-child(2) input")?.focus();
+          }
+        });
+      };
+
       const nIn = document.createElement("input");
       nIn.type = "text"; nIn.placeholder = "Test / Certamen"; nIn.value = evData.name || "";
       nIn.oninput = syncDetailToData;
@@ -880,13 +1085,15 @@
       const gIn = document.createElement("input");
       gIn.type = "text"; gIn.inputMode = "decimal"; gIn.placeholder = "Ej: 55 ó 5,5";
       gIn.value = evData.grade ?? "";
-      gIn.oninput = () => { delete gIn.dataset.fromSubs; gIn.style.color = ""; syncDetailToData(); };
+      gIn.oninput = () => { delete gIn.dataset.fromSubs; gIn.style.color = ""; gIn.style.fontStyle = ""; syncDetailToData(); };
+      enterAdds(gIn);
 
       const pWrap = document.createElement("div");
       pWrap.className = "percent-wrapper";
       const pIn = document.createElement("input");
       pIn.type = "text"; pIn.inputMode = "decimal"; pIn.placeholder = "Ej: 30";
       pIn.value = evData.percent ?? ""; pIn.oninput = syncDetailToData;
+      enterAdds(pIn);
       const pSpan = document.createElement("span"); pSpan.textContent = "%";
       pWrap.append(pIn, pSpan);
 
@@ -896,8 +1103,10 @@
 
       const delBtn = document.createElement("button");
       delBtn.className = "btn-danger btn-mini"; delBtn.textContent = "✕";
-      delBtn.onclick = () => {
-        if (!confirm("¿Eliminar evaluación?")) return;
+      delBtn.title = "Eliminar evaluación";
+      delBtn.onclick = async () => {
+        const ok = await confirmDialog("¿Eliminar esta evaluación?");
+        if (!ok) return;
         const next = tr.nextSibling;
         tr.remove();
         if (next?.querySelector?.("details")) next.remove();
@@ -939,8 +1148,9 @@
 
       const clrSub = document.createElement("button");
       clrSub.className = "btn-danger btn-mini"; clrSub.textContent = "Borrar subs";
-      clrSub.onclick = () => {
-        if (!confirm("¿Borrar sub-evaluaciones?")) return;
+      clrSub.onclick = async () => {
+        const ok = await confirmDialog("¿Borrar todas las sub-evaluaciones?", "Borrar");
+        if (!ok) return;
         subTbody.innerHTML = ""; addSubRow(subTbody, emptySubEval());
         splitCb.checked = true; detailsEl.open = true; syncDetailToData();
       };
@@ -990,10 +1200,10 @@
         const hInputs = sc.querySelectorAll(".subject-header input");
         const sub = { name: hInputs[0]?.value ?? "", weight: hInputs[1]?.value ?? "", evaluations: [] };
 
-        const rows = Array.from(sc.querySelectorAll("tbody > tr"));
+        const rows = Array.from(sc.querySelectorAll(":scope > .table-scroll > table > tbody > tr"));
         for (let i = 0; i < rows.length; i++) {
           const r = rows[i];
-          const tds = r.querySelectorAll("td");
+          const tds = r.querySelectorAll(":scope > td");
           if (tds.length === 5) {
             const gradeInput = tds[1].querySelector("input");
             const isAutoFilled = !!gradeInput?.dataset.fromSubs;
@@ -1044,10 +1254,8 @@
         /* ── Update subject card UI ── */
         const res = computeSubject(sub);
 
-        // Left border color
         sc.className = "subject-card" + (res.avg !== null ? " " + gradeClass(res.avg) : "");
 
-        // Average display
         const avgEl  = sc.querySelector(".subject-average");
         const avgSub = sc.querySelector(".subject-average-sub");
         if (res.avg !== null) {
@@ -1073,23 +1281,29 @@
         }
 
         // Needed grade box
-        const neededVal = sc.querySelector(".needed-value");
-        const neededSub = sc.querySelector(".needed-sub");
+        const neededVal   = sc.querySelector(".needed-value");
+        const neededSub   = sc.querySelector(".needed-sub");
+        const neededLabel = sc.querySelector(".needed-label");
         if (neededVal) {
-          const needed = computeNeeded(sub);
+          neededLabel.textContent = targetGrade === PASS_GRADE
+            ? "Necesitas para aprobar"
+            : `Necesitas para ${targetGrade.toFixed(1)}`;
+          const needed = computeNeeded(sub, targetGrade);
           if (needed === null) {
-            // No hay evaluaciones pendientes
             if (res.avg !== null) {
-              neededVal.textContent = res.avg >= PASS_GRADE ? "✓" : "✗";
-              neededVal.style.color = res.avg >= PASS_GRADE ? "var(--success)" : "var(--danger)";
-              neededSub.textContent = res.avg >= PASS_GRADE ? "Aprobado" : "Reprobado";
+              const reached = res.avg >= targetGrade;
+              neededVal.textContent = reached ? "✓" : "✗";
+              neededVal.style.color = reached ? "var(--success)" : "var(--danger)";
+              neededSub.textContent = targetGrade === PASS_GRADE
+                ? (reached ? "Aprobado" : "Reprobado")
+                : (reached ? "Meta alcanzada" : "Meta no alcanzada");
             } else {
               neededVal.textContent = "—"; neededVal.style.color = ""; neededSub.textContent = "";
             }
           } else if (needed <= 1.0) {
             neededVal.textContent = "✓";
             neededVal.style.color = "var(--success)";
-            neededSub.textContent = "Ya aprobado";
+            neededSub.textContent = targetGrade === PASS_GRADE ? "Ya aprobado" : "Meta asegurada";
           } else if (needed > GRADE_MAX) {
             neededVal.textContent = "Impos.";
             neededVal.style.color = "var(--grade-fail)";
@@ -1097,7 +1311,7 @@
           } else {
             neededVal.textContent = needed.toFixed(1);
             neededVal.style.color = gradeColor(needed);
-            neededSub.textContent = `en notas faltantes`;
+            neededSub.textContent = "en notas faltantes";
           }
         }
       }
@@ -1120,21 +1334,227 @@
       scheduleLightRender();
     }
 
+    /* Meta / target */
+    targetSelect.onchange = () => {
+      targetGrade = parseFloat(targetSelect.value) || PASS_GRADE;
+      localStorage.setItem(TARGET_KEY, String(targetGrade));
+      syncDetailToData();
+    };
+
     /* ──────────────────────────────
-       GLOBAL AVERAGE
+       KPIs + TREND CHART
     ────────────────────────────── */
-    function renderGlobalAverage() {
+    function renderStats() {
       const g = computeGlobal();
       if (!g) {
         globalNormalEl.textContent = "—"; globalNormalEl.style.color = "";
         globalRoundedEl.textContent = "—"; globalRoundedEl.style.color = "";
-        return;
+      } else {
+        globalNormalEl.textContent  = safeFixed(g.normal, 2);
+        globalNormalEl.style.color  = gradeColor(g.normal);
+        globalRoundedEl.textContent = safeFixed(g.rounded, 1);
+        globalRoundedEl.style.color = gradeColor(g.rounded);
       }
-      globalNormalEl.textContent  = safeFixed(g.normal, 2);
-      globalNormalEl.style.color  = gradeColor(g.normal);
-      globalRoundedEl.textContent = safeFixed(g.rounded, 1);
-      globalRoundedEl.style.color = gradeColor(g.rounded);
+
+      const counts = computeCounts();
+      if (counts.total > 0) {
+        kpiApprovedEl.textContent = `${counts.approved}/${counts.total}`;
+        kpiApprovedEl.style.color = counts.failed === 0 ? "var(--success)" : "";
+        kpiApprovedSubEl.textContent = counts.failed > 0
+          ? `${counts.failed} bajo 4.0`
+          : "Todos sobre 4.0 ✓";
+      } else {
+        kpiApprovedEl.textContent = "—"; kpiApprovedEl.style.color = "";
+        kpiApprovedSubEl.textContent = "Con nota ≥ 4.0";
+      }
+
+      kpiSemestersEl.textContent = String(semestersData.length);
+      kpiSemestersSubEl.textContent = semestersData.length === 1 ? "registrado" : "registrados";
+
+      renderTrendChart();
     }
+
+    /* Gráfico de tendencia: una serie (promedio redondeado por semestre) */
+    const CHART = { h: 210, padL: 34, padR: 18, padT: 14, padB: 30, line: "#6d79f0" };
+    let chartPoints = [];
+    let chartGeom = null;
+    let chartFocusIdx = -1;
+
+    function renderTrendChart() {
+      chartPoints = semestersData
+        .map((sem, i) => {
+          const avg = computeSemester(sem);
+          return avg ? { name: semesterDisplayName(sem, i), rounded: avg.rounded, normal: avg.normal } : null;
+        })
+        .filter(Boolean);
+
+      hideChartTooltip();
+      if (chartPoints.length < 2) { chartCard.style.display = "none"; chartHost.innerHTML = ""; return; }
+      chartCard.style.display = "block";
+
+      const W = Math.max(280, chartHost.clientWidth || chartCard.clientWidth - 32);
+      const H = CHART.h;
+      const { padL, padR, padT, padB } = CHART;
+      const iw = W - padL - padR, ih = H - padT - padB;
+      const n = chartPoints.length;
+      const x = (i) => padL + (n === 1 ? iw / 2 : (i / (n - 1)) * iw);
+      const y = (v) => padT + (1 - (v - GRADE_MIN) / (GRADE_MAX - GRADE_MIN)) * ih;
+      chartGeom = { x, y, W, H };
+
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", W); svg.setAttribute("height", H);
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", "Evolución del promedio redondeado por semestre");
+      svg.setAttribute("tabindex", "0");
+
+      const mk = (tag, attrs) => {
+        const el = document.createElementNS(svgNS, tag);
+        for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+        return el;
+      };
+
+      /* Gridlines horizontales (hairline, recesivas) + ticks del eje Y */
+      for (let v = 2; v <= 7; v++) {
+        svg.append(mk("line", { x1: padL, x2: W - padR, y1: y(v), y2: y(v), stroke: "#1e1e32", "stroke-width": 1 }));
+        const isPass = v === PASS_GRADE;
+        const tick = mk("text", {
+          x: padL - 8, y: y(v) + 3.5, "text-anchor": "end",
+          "font-size": 10, fill: isPass ? "#22c55e" : "#4a4a66"
+        });
+        tick.textContent = v.toFixed(1);
+        svg.append(tick);
+      }
+      /* Línea de aprobación 4.0 */
+      svg.append(mk("line", { x1: padL, x2: W - padR, y1: y(PASS_GRADE), y2: y(PASS_GRADE), stroke: "rgba(34,197,94,.45)", "stroke-width": 1 }));
+
+      /* Wash de área (~10% opacidad) */
+      const areaPts = chartPoints.map((p, i) => `${x(i)},${y(p.rounded)}`).join(" ");
+      svg.append(mk("polygon", {
+        points: `${x(0)},${y(GRADE_MIN)} ${areaPts} ${x(n - 1)},${y(GRADE_MIN)}`,
+        fill: CHART.line, opacity: 0.1
+      }));
+
+      /* Línea 2px */
+      svg.append(mk("polyline", {
+        points: areaPts, fill: "none", stroke: CHART.line,
+        "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round"
+      }));
+
+      /* Crosshair (oculto hasta hover) */
+      const crosshair = mk("line", { x1: 0, x2: 0, y1: padT, y2: H - padB, stroke: "#33334d", "stroke-width": 1, opacity: 0 });
+      crosshair.dataset.role = "crosshair";
+      svg.append(crosshair);
+
+      /* Puntos: ≥8px con anillo de 2px del color de la superficie */
+      chartPoints.forEach((p, i) => {
+        svg.append(mk("circle", {
+          cx: x(i), cy: y(p.rounded), r: 4.5,
+          fill: CHART.line, stroke: "#111120", "stroke-width": 2
+        }));
+      });
+
+      /* Etiqueta directa solo en el último punto */
+      const last = chartPoints[n - 1];
+      const lastLabel = mk("text", {
+        x: Math.min(x(n - 1) + 8, W - padR), y: y(last.rounded) - 8,
+        "font-size": 11, "font-weight": 700, fill: "#e8e8f0",
+        "text-anchor": x(n - 1) + 30 > W - padR ? "end" : "start"
+      });
+      lastLabel.textContent = last.rounded.toFixed(1);
+      svg.append(lastLabel);
+
+      /* Ticks del eje X (nombres de semestres, salteados si son muchos) */
+      const step = Math.ceil(n / 6);
+      chartPoints.forEach((p, i) => {
+        if (i % step !== 0 && i !== n - 1) return;
+        const t = mk("text", { x: x(i), y: H - padB + 16, "text-anchor": "middle", "font-size": 10, fill: "#4a4a66" });
+        t.textContent = p.name.length > 9 ? p.name.slice(0, 8) + "…" : p.name;
+        svg.append(t);
+      });
+
+      /* Hover: el crosshair encuentra la X más cercana */
+      svg.addEventListener("pointermove", (e) => {
+        const rect = svg.getBoundingClientRect();
+        const px = e.clientX - rect.left;
+        let best = 0, bestD = Infinity;
+        for (let i = 0; i < n; i++) {
+          const d = Math.abs(px - x(i));
+          if (d < bestD) { bestD = d; best = i; }
+        }
+        showChartTooltip(best, svg);
+      });
+      svg.addEventListener("pointerleave", hideChartTooltip);
+
+      /* Teclado: flechas recorren los puntos */
+      svg.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          const dir = e.key === "ArrowRight" ? 1 : -1;
+          chartFocusIdx = clamp(chartFocusIdx + dir, 0, n - 1);
+          showChartTooltip(chartFocusIdx, svg);
+        } else if (e.key === "Escape") { hideChartTooltip(); }
+      });
+      svg.addEventListener("focus", () => { chartFocusIdx = n - 1; showChartTooltip(chartFocusIdx, svg); });
+      svg.addEventListener("blur", hideChartTooltip);
+
+      chartHost.innerHTML = "";
+      chartHost.append(svg);
+    }
+
+    function showChartTooltip(i, svg) {
+      const p = chartPoints[i];
+      if (!p || !chartGeom) return;
+      chartFocusIdx = i;
+
+      const crosshair = svg.querySelector("[data-role='crosshair']");
+      if (crosshair) {
+        crosshair.setAttribute("x1", chartGeom.x(i));
+        crosshair.setAttribute("x2", chartGeom.x(i));
+        crosshair.setAttribute("opacity", 1);
+      }
+
+      /* Contenido con textContent (nombres = datos no confiables) */
+      chartTooltip.innerHTML = "";
+      const nameEl = document.createElement("div");
+      nameEl.className = "tt-name";
+      nameEl.textContent = p.name;
+      const v1 = document.createElement("div");
+      v1.className = "tt-val";
+      const s1 = document.createElement("strong");
+      s1.textContent = p.rounded.toFixed(1);
+      v1.append(s1, document.createTextNode(" redondeado"));
+      const v2 = document.createElement("div");
+      v2.className = "tt-val";
+      v2.textContent = `${p.normal.toFixed(2)} exacto`;
+      chartTooltip.append(nameEl, v1, v2);
+      chartTooltip.style.display = "block";
+
+      const hostRect = chartCard.getBoundingClientRect();
+      const svgRect  = svg.getBoundingClientRect();
+      const px = svgRect.left - hostRect.left + chartGeom.x(i);
+      const py = svgRect.top - hostRect.top + chartGeom.y(p.rounded);
+      const ttW = chartTooltip.offsetWidth || 120;
+      let left = px + 12;
+      if (left + ttW > hostRect.width - 8) left = px - ttW - 12;
+      chartTooltip.style.left = Math.max(4, left) + "px";
+      chartTooltip.style.top  = Math.max(4, py - 20) + "px";
+    }
+
+    function hideChartTooltip() {
+      chartTooltip.style.display = "none";
+      const crosshair = chartHost.querySelector("[data-role='crosshair']");
+      if (crosshair) crosshair.setAttribute("opacity", 0);
+      chartFocusIdx = -1;
+    }
+
+    /* Re-render del gráfico al redimensionar */
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { if (chartPoints.length >= 2) renderTrendChart(); }, 150);
+    });
 
     /* ──────────────────────────────
        AUTH
@@ -1157,7 +1577,7 @@
       const local = loadFromLocal();
       if (!u) {
         semestersData = local.semesters || [];
-        renderSemesterList(); renderGlobalAverage(); showListView(); return;
+        renderSemesterList(); renderStats(); showListView(); return;
       }
 
       const remote  = await loadFromRemote(u);
@@ -1176,7 +1596,7 @@
       }
 
       setSyncDot("synced");
-      renderSemesterList(); renderGlobalAverage(); showListView();
+      renderSemesterList(); renderStats(); showListView();
     });
 
     /* ──────────────────────────────
@@ -1184,30 +1604,29 @@
     ────────────────────────────── */
     addSemesterBtn.onclick = () => {
       semestersData.push(emptySemester());
-      scheduleSave(); renderSemesterList(); renderGlobalAverage();
-    };
-
-    recalcAllBtn.onclick = () => {
-      renderSemesterList(); renderGlobalAverage();
-      if (viewDetail.style.display === "block") renderSemesterDetail();
+      scheduleSave(); renderSemesterList(); renderStats();
+      openSemester(semestersData.length - 1);
     };
 
     clearAllBtn.onclick = async () => {
-      if (!confirm("¿Borrar todo? Esta acción no se puede deshacer.")) return;
+      const ok = await confirmDialog("¿Borrar TODOS los semestres y notas? Esta acción no se puede deshacer.", "Borrar todo");
+      if (!ok) return;
       semestersData = [];
       localStorage.removeItem(LOCAL_KEY);
       await clearRemote();
-      renderSemesterList(); renderGlobalAverage(); showListView();
+      renderSemesterList(); renderStats(); showListView();
+      toast("Datos borrados", "ok");
     };
 
-    backBtn.onclick = () => { syncDetailToData(); showListView(); };
+    backBtn.onclick = () => { syncDetailToData(); showListView(); renderSemesterList(); renderStats(); };
 
     delSemBtn.onclick = async () => {
-      if (!confirm("¿Eliminar semestre?")) return;
+      const ok = await confirmDialog("¿Eliminar este semestre completo?");
+      if (!ok) return;
       semestersData.splice(selectedIdx, 1);
       selectedIdx = null;
       await saveData();
-      renderSemesterList(); renderGlobalAverage(); showListView();
+      renderSemesterList(); renderStats(); showListView();
     };
 
     /* ──────────────────────────────
@@ -1228,10 +1647,11 @@
         const data     = JSON.parse(await file.text());
         const imported = Array.isArray(data.semesters) ? data.semesters : null;
         if (!imported) { toast("JSON inválido (falta 'semesters')", "err"); return; }
-        if (!confirm("Esto reemplazará tus datos actuales. ¿Continuar?")) return;
+        const ok = await confirmDialog("Esto reemplazará tus datos actuales. ¿Continuar?", "Importar");
+        if (!ok) return;
         semestersData = imported;
         await saveData();
-        renderSemesterList(); renderGlobalAverage(); showListView();
+        renderSemesterList(); renderStats(); showListView();
         toast("Importado correctamente ✓", "ok");
       } catch (err) {
         console.error(err);
@@ -1245,7 +1665,7 @@
     (function init() {
       const local = loadFromLocal();
       semestersData = local.semesters || [];
-      renderSemesterList(); renderGlobalAverage(); showListView();
+      renderSemesterList(); renderStats(); showListView();
     })();
   </script>
 
