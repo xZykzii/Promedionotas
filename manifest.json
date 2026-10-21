@@ -4,7 +4,7 @@
   "start_url": "/Promedionotas/",
   "scope": "/Promedionotas/",
   "display": "standalone",
-  "background_color": "#f5f6f2",
+  "background_color": "#d4dcd1",
   "theme_color": "#17644b",
   "icons": [
     {
