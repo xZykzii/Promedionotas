@@ -1,4 +1,4 @@
-const CACHE_NAME = 'promedios-ubb-v1';
+const CACHE_NAME = 'promedios-ubb-v2';
 
 const ASSETS = [
   '/Promedionotas/',

@@ -7,8 +7,10 @@ evaluaciones, y recalcula el promedio en tiempo real a medida que se editan las 
 
 ## Qué hace
 
+- Interfaz clara y minimalista, con campos adaptados a pantallas de escritorio y celular.
 - Estructura en tres niveles: semestres → asignaturas → evaluaciones, con subevaluaciones
-  y ponderaciones propias.
+  y ponderaciones propias. Las filas totalmente vacías sobrantes se limpian al abrir
+  una asignatura; agregar una subevaluación reutiliza la fila vacía existente.
 - Promedio por asignatura, por semestre y global, en versión exacta y redondeada
   (redondeo configurable, con opción de un decimal por ramo).
 - Cálculo de la nota que se necesita en lo que queda para aprobar.
