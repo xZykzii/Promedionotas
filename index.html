@@ -209,6 +209,25 @@
       .auth-right, .auth-right button { width: 100%; }
       .app-footer { flex-direction: column; }
     }
+    .subject-options { display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+    .subject-options .toggle { padding: 0; }
+    .exam-panel { min-width: 0; background: var(--card-soft); border: 1px solid var(--border); border-radius: var(--rs); padding: 18px; }
+    .exam-toggle { color: var(--text); font-weight: 650; padding: 0; }
+    .exam-content > .hint { margin: 14px 0; }
+    .exam-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .exam-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .exam-field > span { color: var(--text-soft); font-size: .73rem; line-height: 1.5; }
+    .exam-rules { margin-top: 16px; background: transparent; }
+    .exam-result { border-left: 3px solid var(--accent); background: var(--surface); border-radius: var(--rx); padding: 16px; margin-top: 16px; }
+    .exam-result[data-state="invalid"], .exam-result[data-state="impossible"], .exam-result[data-state="failed"] { border-left-color: var(--danger); }
+    .exam-status { display: block; font-size: 1rem; margin-bottom: 10px; }
+    .exam-numbers { font-size: .95rem; font-weight: 600; line-height: 1.8; font-variant-numeric: tabular-nums; }
+    .exam-message { color: var(--text-soft); font-size: .78rem; line-height: 1.6; margin: 8px 0 0; }
+    @media (max-width: 640px) {
+      .exam-panel { padding: 14px 12px; }
+      .exam-fields { grid-template-columns: 1fr; gap: 12px; }
+      .exam-numbers { font-size: .85rem; }
+    }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
@@ -301,6 +320,11 @@
     const GRADE_MAX    = 7.0;
     const PASS_GRADE   = 4.0;   // nota de aprobación
     const PCT_TOLERANCE = 1.0;
+    const PERCENT_TOTAL = 100;
+    const COMPLETE_TOLERANCE = 0.01;
+    const NUMERIC_EPSILON = 1e-9;
+    const DEFAULT_EXAM_PERCENT = "40";
+    const GRADE_DECIMALS_FACTOR = 10;
 
     /* ── FIREBASE ── */
     const appFB    = initializeApp(firebaseConfig);
@@ -480,19 +504,21 @@
     /* ──────────────────────────────
        DATA FACTORIES
     ────────────────────────────── */
+    const emptyExam = () => ({ isEnabled: true, percent: DEFAULT_EXAM_PERCENT,
+      passGrade: String(PASS_GRADE), exemptionGrade: String(PASS_GRADE), minGrade: "", grade: "" });
     const emptySubEval = () => ({ name: "", grade: "", percent: "" });
     const emptyEval    = () => ({ name: "", grade: "", percent: "", useSubs: false, subs: [emptySubEval()] });
-    const emptySubject = () => ({ name: "", weight: "", evaluations: [emptyEval()] });
+    const emptySubject = () => ({ name: "", weight: "", useEqualWeights: false, exam: emptyExam(), evaluations: [emptyEval()] });
     const emptySemester= () => ({ id: uid(), name: "", useWeights: false, subjects: [emptySubject()] });
 
     /* ──────────────────────────────
        CALC
     ────────────────────────────── */
     function evalGrade(ev) {
-      if (!ev?.useSubs) return parseGrade(ev?.grade);
+      if (!ev?.useSubs) return parseBoundedNumber(ev?.grade, GRADE_MIN, GRADE_MAX, true);
       let tot = 0, w = 0;
       for (const s of (ev?.subs || [])) {
-        const g = parseGrade(s.grade), p = parsePercent(s.percent);
+        const g = parseBoundedNumber(s.grade, GRADE_MIN, GRADE_MAX, true), p = parseBoundedNumber(s.percent, 0, PERCENT_TOTAL);
         if (Number.isFinite(g) && Number.isFinite(p)) { tot += p; w += g * p; }
       }
       return tot > 0 ? w / tot : NaN;
@@ -501,7 +527,7 @@
     function computeSubject(sub) {
       let tot = 0, w = 0;
       for (const ev of (sub.evaluations || [])) {
-        const p = parsePercent(ev.percent), g = evalGrade(ev);
+        const p = evaluationPercent(sub, ev), g = evalGrade(ev);
         if (Number.isFinite(p) && Number.isFinite(g)) { tot += p; w += g * p; }
       }
       if (!(tot > 0)) return { avg: null, rounded1: null, sumPercent: 0 };
@@ -515,7 +541,7 @@
       let pendingPercent = 0;
 
       for (const ev of (sub.evaluations || [])) {
-        const p = parsePercent(ev.percent);
+        const p = evaluationPercent(sub, ev);
         if (!Number.isFinite(p) || p <= 0) continue;
 
         const g = evalGrade(ev);
@@ -538,17 +564,18 @@
     }
 
     function aggregateSubjects(subjects) {
-      let total = 0, exact = 0, rounded = 0;
+      let total = 0, exact = 0, rounded = 0, isProvisional = false;
       for (const { sub, useWeights } of subjects) {
-        const result = computeSubject(sub);
+        const result = courseAverage(sub);
         if (result.avg === null) continue;
         const weight = Number(norm(sub.weight));
         const effective = useWeights && Number.isFinite(weight) && weight > 0 ? weight : 1;
+        isProvisional ||= result.isProvisional;
         total += effective;
         exact += result.avg * effective;
         rounded += result.rounded1 * effective;
       }
-      return total > 0 ? { normal: exact / total, rounded: round1(rounded / total) } : null;
+      return total > 0 ? { normal: exact / total, rounded: round1(rounded / total), isProvisional } : null;
     }
 
     function computeSemester(sem) {
@@ -559,6 +586,246 @@
       return aggregateSubjects(semestersData.flatMap(sem =>
         (sem.subjects || []).map(sub => ({ sub, useWeights: sem.useWeights }))));
     }
+
+    /* ── Integradora y ponderaciones ── */
+    function parseBoundedNumber(value, min, max, isGrade = false) {
+      if (typeof value !== "string" && typeof value !== "number") return NaN;
+      const raw = norm(value);
+      if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(raw)) return NaN;
+      let parsed = Number(raw);
+      if (isGrade && parsed > GRADE_MAX && parsed <= GRADE_MAX * GRADE_DECIMALS_FACTOR) parsed /= GRADE_DECIMALS_FACTOR;
+      return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : NaN;
+    }
+
+    function normalizeExam(value) {
+      const defaults = emptyExam();
+      if (!value || typeof value !== "object" || Array.isArray(value)) return defaults;
+      const result = { isEnabled: typeof value.isEnabled === "boolean" ? value.isEnabled : defaults.isEnabled };
+      for (const key of ["percent", "passGrade", "exemptionGrade", "minGrade", "grade"]) {
+        const raw = value[key] ?? defaults[key];
+        result[key] = typeof raw === "string" || typeof raw === "number" ? String(raw) : "";
+      }
+      return result;
+    }
+
+    function evaluationPercent(sub, ev) {
+      if (sub.useEqualWeights === true) return PERCENT_TOTAL / sub.evaluations.length;
+      return parseBoundedNumber(ev.percent, 0, PERCENT_TOTAL);
+    }
+
+    function isEvaluationComplete(ev) {
+      if (!ev.useSubs) return Number.isFinite(parseBoundedNumber(ev.grade, GRADE_MIN, GRADE_MAX, true));
+      const subs = compactSubEvals(ev.subs);
+      let total = 0;
+      for (const part of subs) {
+        const percent = parseBoundedNumber(part.percent, 0, PERCENT_TOTAL);
+        if (!Number.isFinite(percent)) return false;
+        if (percent > 0 && !Number.isFinite(parseBoundedNumber(part.grade, GRADE_MIN, GRADE_MAX, true))) return false;
+        total += percent;
+      }
+      return Math.abs(total - PERCENT_TOTAL) <= COMPLETE_TOLERANCE;
+    }
+
+    function isSubjectComplete(sub) {
+      if (!sub.evaluations?.length) return false;
+      let total = 0;
+      for (const ev of sub.evaluations) {
+        const percent = evaluationPercent(sub, ev);
+        if (!Number.isFinite(percent)) return false;
+        if (percent > 0 && !isEvaluationComplete(ev)) return false;
+        total += percent;
+      }
+      return Math.abs(total - PERCENT_TOTAL) <= COMPLETE_TOLERANCE;
+    }
+
+    function examSettings(exam) {
+      const percent = parseBoundedNumber(exam.percent, 0, PERCENT_TOTAL);
+      const target = parseBoundedNumber(exam.passGrade, GRADE_MIN, GRADE_MAX, true);
+      const exemption = parseBoundedNumber(exam.exemptionGrade, GRADE_MIN, GRADE_MAX, true);
+      const minimum = parseBoundedNumber(exam.minGrade, GRADE_MIN, GRADE_MAX, true);
+      let error = "";
+      if (!Number.isFinite(percent) || percent <= 0) error = "El examen debe valer más de 0 % y hasta 100 %.";
+      else if (!Number.isFinite(target)) error = "Ingresa una nota de aprobación entre 1,0 y 7,0.";
+      else if (norm(exam.exemptionGrade) && (!Number.isFinite(exemption) || exemption < target)) error = "La nota para aprobar sin examen debe ser válida y no menor a la de aprobación.";
+      else if (norm(exam.minGrade) && !Number.isFinite(minimum)) error = "La nota mínima del examen debe estar entre 1,0 y 7,0.";
+      return { percent, target, exemption, minimum, error };
+    }
+
+    function ceilGrade(value) {
+      return Math.ceil((value - NUMERIC_EPSILON) * GRADE_DECIMALS_FACTOR) / GRADE_DECIMALS_FACTOR;
+    }
+
+    function examOutcome(sub) {
+      const exam = normalizeExam(sub.exam);
+      const presentation = computeSubject(sub).avg;
+      const isComplete = isSubjectComplete(sub) || (exam.isEnabled && parseBoundedNumber(exam.percent, 0, PERCENT_TOTAL) === PERCENT_TOTAL);
+      const base = { presentation, isComplete, exam, final: null, needed: null };
+      if (!exam.isEnabled) return { ...base, status: "disabled" };
+      const settings = examSettings(exam);
+      if (settings.error) return { ...base, status: "invalid", message: settings.error };
+      if (presentation === null && settings.percent !== PERCENT_TOTAL) return { ...base, status: "waiting", message: "Ingresa tus evaluaciones para calcular la integradora." };
+      if (isComplete && presentation !== null && presentation + NUMERIC_EPSILON >= settings.exemption) {
+        return { ...base, status: "exempt", final: presentation, message: "Aprobaste sin integradora según la regla configurada." };
+      }
+      const weight = settings.percent / PERCENT_TOTAL;
+      const required = (settings.target - (presentation ?? 0) * (1 - weight)) / weight;
+      const needed = ceilGrade(Math.max(required, settings.minimum || GRADE_MIN, GRADE_MIN));
+      const grade = parseBoundedNumber(exam.grade, GRADE_MIN, GRADE_MAX, true);
+      if (norm(exam.grade) && !Number.isFinite(grade)) {
+        return { ...base, status: "invalid", message: "La nota del examen debe estar entre 1,0 y 7,0." };
+      }
+      const final = Number.isFinite(grade) ? (presentation ?? 0) * (1 - weight) + grade * weight : null;
+      if (!isComplete) return { ...base, final, needed, status: "provisional", message: "Proyección: faltan notas o completar las ponderaciones al 100 %." };
+      if (final !== null) {
+        const hasPassed = final + NUMERIC_EPSILON >= settings.target && (!Number.isFinite(settings.minimum) || grade + NUMERIC_EPSILON >= settings.minimum);
+        return { ...base, final, needed, status: hasPassed ? "passed" : "failed", message: hasPassed ? "Apruebas el ramo con la integradora." : "No se alcanza la nota de aprobación o la mínima del examen." };
+      }
+      return { ...base, needed, status: needed > GRADE_MAX ? "impossible" : "pending", message: needed > GRADE_MAX ? "No alcanza con un 7,0 en la integradora." : "Necesitas esta nota en la integradora para aprobar." };
+    }
+
+    function courseAverage(sub) {
+      const presentation = computeSubject(sub);
+      const outcome = examOutcome(sub);
+      const hasFinal = ["exempt", "passed", "failed"].includes(outcome.status);
+      const avg = hasFinal ? outcome.final : presentation.avg;
+      return { ...presentation, avg, rounded1: avg === null ? null : round1(avg),
+        isProvisional: !outcome.isComplete || (outcome.exam.isEnabled && !hasFinal) };
+    }
+
+    function buildSubjectOptions(data) {
+      const options = document.createElement("div");
+      options.className = "subject-options";
+      const label = document.createElement("label");
+      label.className = "toggle";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "equal-weights";
+      checkbox.checked = data.useEqualWeights === true;
+      checkbox.onchange = syncDetailToData;
+      label.append(checkbox, document.createTextNode("Ponderaciones iguales"));
+      const clean = document.createElement("button");
+      clean.className = "btn-ghost btn-mini";
+      clean.textContent = "Limpiar notas";
+      clean.onclick = () => clearSubjectGrades(options.closest(".subject-card"));
+      options.append(label, clean);
+      return options;
+    }
+
+    function clearSubjectGrades(card) {
+      if (!confirm("¿Vaciar las notas de este ramo? Se conservarán nombres, porcentajes y reglas del examen.")) return;
+      for (const input of card.querySelectorAll(".eval-row > td:nth-child(2) input, .sub-table td:nth-child(2) input, [data-exam='grade']")) {
+        input.value = "";
+        delete input.dataset.fromSubs;
+        delete input.dataset.manualGrade;
+      }
+      syncDetailToData();
+    }
+
+    function updateEqualPercentInputs(card, hasEqualWeights) {
+      const inputs = Array.from(card.querySelectorAll(".eval-row > td:nth-child(3) input"));
+      for (const input of inputs) {
+        input.readOnly = hasEqualWeights;
+        if (hasEqualWeights) {
+          input.dataset.manualPercent ??= input.value;
+          input.value = safeFixed(PERCENT_TOTAL / inputs.length, 2);
+        } else if (input.dataset.manualPercent !== undefined) {
+          input.value = input.dataset.manualPercent;
+          delete input.dataset.manualPercent;
+        }
+      }
+    }
+
+    function createExamField(key, labelText, value, placeholder = "Ej: 4,0") {
+      const label = document.createElement("label");
+      label.className = "exam-field";
+      const text = document.createElement("span");
+      text.textContent = labelText;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.inputMode = "decimal";
+      input.dataset.exam = key;
+      input.value = value;
+      input.placeholder = placeholder;
+      input.oninput = syncDetailToData;
+      label.append(text, input);
+      return label;
+    }
+
+    function buildExamPanel(value) {
+      const exam = normalizeExam(value);
+      const panel = document.createElement("section");
+      panel.className = "exam-panel";
+      panel.innerHTML = `<label class="toggle exam-toggle"><input type="checkbox" class="exam-enabled"> Integradora / examen final</label>
+        <div class="exam-content"><p class="hint">Las evaluaciones de arriba suman 100 % de la presentación; el examen se pondera aparte. Por defecto apruebas con presentación de 4,0 o más. Ajusta tus reglas; se usan notas sin redondear.</p>
+        <div class="exam-fields"></div><details class="exam-rules"><summary>Reglas de aprobación</summary><div class="exam-fields advanced-fields"></div></details>
+        <div class="exam-result" role="status" aria-live="polite"><strong class="exam-status"></strong><div class="exam-numbers"></div><p class="exam-message"></p></div></div>`;
+      const enabled = panel.querySelector(".exam-enabled");
+      enabled.checked = exam.isEnabled;
+      enabled.onchange = syncDetailToData;
+      const fields = panel.querySelector(".exam-fields");
+      fields.append(createExamField("percent", "Ponderación del examen (%)", exam.percent, "Ej: 40"));
+      fields.append(createExamField("presentationPercent", "Ponderación de presentación (%)", "", "Automática"));
+      fields.querySelector("[data-exam='presentationPercent']").readOnly = true;
+      fields.append(createExamField("grade", "Nota de la integradora (opcional)", exam.grade, "Ej: 45 o 4,5"));
+      const rules = panel.querySelector(".advanced-fields");
+      rules.append(createExamField("passGrade", "Nota final para aprobar", exam.passGrade));
+      rules.append(createExamField("exemptionGrade", "Apruebas sin examen desde (opcional)", exam.exemptionGrade, "Vacío: examen obligatorio"));
+      rules.append(createExamField("minGrade", "Mínimo obligatorio en examen (opcional)", exam.minGrade, "Vacío: sin mínimo adicional"));
+      return panel;
+    }
+
+    function readExamInputs(card) {
+      const result = { isEnabled: card.querySelector(".exam-enabled").checked };
+      for (const key of ["percent", "passGrade", "exemptionGrade", "minGrade", "grade"]) {
+        result[key] = card.querySelector(`[data-exam='${key}']`).value;
+      }
+      return result;
+    }
+
+    function updateExamPanel(card, sub) {
+      const panel = card.querySelector(".exam-panel");
+      const outcome = examOutcome(sub);
+      panel.querySelector(".exam-content").hidden = !outcome.exam.isEnabled;
+      const percent = examSettings(outcome.exam).percent;
+      panel.querySelector("[data-exam='presentationPercent']").value = Number.isFinite(percent) ? safeFixed(PERCENT_TOTAL - percent, 1) : "";
+      const titles = { waiting: "Faltan tus notas", invalid: "Revisa los datos", provisional: "Proyección de integradora",
+        exempt: "Aprobado sin integradora", pending: "Vas a integradora", impossible: "No alcanza con 7,0",
+        passed: "Aprobado con integradora", failed: "No alcanza para aprobar" };
+      panel.querySelector(".exam-status").textContent = titles[outcome.status] || "";
+      panel.querySelector(".exam-result").dataset.state = outcome.status;
+      const parts = [];
+      if (outcome.presentation !== null) parts.push(`Presentación: ${safeFixed(outcome.presentation, 2)}`);
+      if (outcome.needed !== null && !["passed", "failed"].includes(outcome.status)) parts.push(`Necesitas en examen: ${safeFixed(outcome.needed, 1)}`);
+      if (outcome.final !== null) parts.push(`${outcome.status === "provisional" ? "Final proyectado" : "Nota final"}: ${safeFixed(outcome.final, 2)}`);
+      panel.querySelector(".exam-numbers").textContent = parts.join(" · ");
+      panel.querySelector(".exam-message").textContent = outcome.message || "";
+    }
+
+    function updateNeededBox(card, sub) {
+      const outcome = examOutcome(sub);
+      const result = courseAverage(sub);
+      const label = card.querySelector(".needed-label");
+      const value = card.querySelector(".needed-value");
+      const hint = card.querySelector(".needed-sub");
+      label.textContent = outcome.exam.isEnabled ? "Integradora / examen" : "Necesitas para aprobar";
+      value.style.color = "";
+      if (outcome.exam.isEnabled) {
+        const hasPassed = ["exempt", "passed"].includes(outcome.status);
+        value.textContent = hasPassed ? "✓" : outcome.status === "failed" ? "✗" : outcome.needed !== null ? safeFixed(outcome.needed, 1) : "—";
+        value.style.color = hasPassed ? "var(--success)" : ["failed", "impossible", "invalid"].includes(outcome.status) ? "var(--danger)" : "";
+        hint.textContent = outcome.status === "provisional" ? "Proyección; faltan evaluaciones" : outcome.status === "pending" ? "Nota mínima necesaria" : card.querySelector(".exam-status").textContent;
+        return;
+      }
+      const needed = computeNeeded(sub);
+      if (needed !== null) {
+        value.textContent = needed > GRADE_MAX ? "Impos." : safeFixed(Math.max(GRADE_MIN, ceilGrade(needed)), 1);
+        hint.textContent = needed > GRADE_MAX ? "No alcanza con 7,0" : "en las evaluaciones pendientes";
+        return;
+      }
+      value.textContent = result.avg === null ? "—" : result.avg >= PASS_GRADE ? "✓" : "✗";
+      hint.textContent = result.avg === null ? "Ingresa tus notas" : result.isProvisional ? "Promedio provisional" : result.avg >= PASS_GRADE ? "Aprobado" : "Reprobado";
+    }
+
 
     /* ──────────────────────────────
        STORAGE / SYNC
@@ -641,7 +908,7 @@
 
           const avgText = document.createElement("span");
           avgText.className = "semester-list-avg";
-          avgText.textContent = `Normal: ${safeFixed(avg.normal, 2)}`;
+          avgText.textContent = `Actual: ${safeFixed(avg.normal, 2)}` + (avg.isProvisional ? " · Provisional" : "");
 
           meta.append(badge, avgText);
         } else {
@@ -821,7 +1088,7 @@
         </div>
       `;
 
-      card.append(hdr, wrap, footer);
+      card.append(hdr, buildSubjectOptions(data), wrap, buildExamPanel(data.exam), footer);
       parent.append(card);
     }
 
@@ -975,7 +1242,10 @@
       const subjects = [];
       for (const sc of root.querySelectorAll(".subject-card")) {
         const hInputs = sc.querySelectorAll(".subject-header input");
-        const sub = { name: hInputs[0]?.value ?? "", weight: hInputs[1]?.value ?? "", evaluations: [] };
+        const hasEqualWeights = sc.querySelector(".equal-weights").checked;
+        updateEqualPercentInputs(sc, hasEqualWeights);
+        const sub = { name: hInputs[0]?.value ?? "", weight: hInputs[1]?.value ?? "",
+          useEqualWeights: hasEqualWeights, exam: readExamInputs(sc), evaluations: [] };
 
         const rows = Array.from(sc.querySelectorAll(".eval-table > tbody > tr"));
         for (let i = 0; i < rows.length; i++) {
@@ -987,7 +1257,8 @@
 
             const evName    = tds[0].querySelector("input")?.value ?? "";
             const evGrade   = isAutoFilled ? (gradeInput.dataset.manualGrade ?? "") : (gradeInput?.value ?? "");
-            const evPercent = tds[2].querySelector("input")?.value ?? "";
+            const percentInput = tds[2].querySelector("input");
+            const evPercent = percentInput?.dataset.manualPercent ?? percentInput?.value ?? "";
             const evUseSubs = tds[3].querySelector("input[type='checkbox']")?.checked ?? false;
 
             const detailsRow = rows[i + 1];
@@ -1011,7 +1282,8 @@
         subjects.push(sub);
 
         /* ── Update subject card UI ── */
-        const res = computeSubject(sub);
+        const res = courseAverage(sub);
+        updateExamPanel(sc, sub);
 
         // Left border color
         sc.className = "subject-card" + (res.avg !== null ? " " + gradeClass(res.avg) : "");
@@ -1020,15 +1292,19 @@
         const avgEl  = sc.querySelector(".subject-average");
         const avgSub = sc.querySelector(".subject-average-sub");
         if (res.avg !== null) {
-          avgEl.textContent = safeFixed(res.rounded1, 1);
-          avgEl.style.color = gradeColor(res.rounded1);
-          avgSub.textContent = `Exacto: ${safeFixed(res.avg, 2)}`;
+          const hasExamFinal = ["passed", "failed"].includes(examOutcome(sub).status);
+          avgEl.textContent = hasExamFinal ? safeFixed(res.avg, 2) : safeFixed(res.rounded1, 1);
+          avgEl.style.color = gradeColor(res.avg);
+          avgSub.textContent = `Exacto: ${safeFixed(res.avg, 2)}` + (res.isProvisional ? " · Provisional" : "");
         } else {
           avgEl.textContent = "—"; avgEl.style.color = ""; avgSub.textContent = "";
         }
 
+        sc.querySelector(".subject-avg-label").textContent = sub.exam.isEnabled && res.isProvisional
+          ? "Promedio de presentación (actual)" : "Promedio asignatura";
+
         // Progress bar
-        const sumP   = res.sumPercent || 0;
+        const sumP   = computeSubject(sub).sumPercent || 0;
         const fill   = sc.querySelector(".progress-fill");
         const pLabel = sc.querySelector(".progress-label");
         if (fill) {
@@ -1041,34 +1317,8 @@
           pLabel.className   = "progress-label" + (ok ? " ok" : over ? " bad" : "");
         }
 
-        // Needed grade box
-        const neededVal = sc.querySelector(".needed-value");
-        const neededSub = sc.querySelector(".needed-sub");
-        if (neededVal) {
-          const needed = computeNeeded(sub);
-          if (needed === null) {
-            // No hay evaluaciones pendientes
-            if (res.avg !== null) {
-              neededVal.textContent = res.avg >= PASS_GRADE ? "✓" : "✗";
-              neededVal.style.color = res.avg >= PASS_GRADE ? "var(--success)" : "var(--danger)";
-              neededSub.textContent = res.avg >= PASS_GRADE ? "Aprobado" : "Reprobado";
-            } else {
-              neededVal.textContent = "—"; neededVal.style.color = ""; neededSub.textContent = "";
-            }
-          } else if (needed <= 1.0) {
-            neededVal.textContent = "✓";
-            neededVal.style.color = "var(--success)";
-            neededSub.textContent = "Ya aprobado";
-          } else if (needed > GRADE_MAX) {
-            neededVal.textContent = "Impos.";
-            neededVal.style.color = "var(--grade-fail)";
-            neededSub.textContent = "No alcanza con 7.0";
-          } else {
-            neededVal.textContent = needed.toFixed(1);
-            neededVal.style.color = gradeColor(needed);
-            neededSub.textContent = `en notas faltantes`;
-          }
-        }
+        updateNeededBox(sc, sub);
+
       }
 
       sem.subjects = subjects;
@@ -1080,7 +1330,7 @@
       if (semAvg) {
         semAvgEl.textContent = safeFixed(semAvg.rounded, 1);
         semAvgEl.style.color = gradeColor(semAvg.rounded);
-        semAvgSub.textContent = `Exacto: ${safeFixed(semAvg.normal, 2)}`;
+        semAvgSub.textContent = `Exacto: ${safeFixed(semAvg.normal, 2)}` + (semAvg.isProvisional ? " · Provisional" : "");
       } else {
         semAvgEl.textContent = "—"; semAvgEl.style.color = ""; semAvgSub.textContent = "";
       }
@@ -1095,10 +1345,16 @@
     function renderGlobalAverage() {
       const g = computeGlobal();
       if (!g) {
+        globalNormalEl.nextElementSibling.textContent = "Calculado con las notas sin redondear";
+        globalRoundedEl.nextElementSibling.textContent = "Con un decimal por asignatura";
         globalNormalEl.textContent = "—"; globalNormalEl.style.color = "";
         globalRoundedEl.textContent = "—"; globalRoundedEl.style.color = "";
         return;
       }
+      globalNormalEl.nextElementSibling.textContent = g.isProvisional
+        ? "Provisional: incluye notas de presentación" : "Calculado con las notas sin redondear";
+      globalRoundedEl.nextElementSibling.textContent = g.isProvisional
+        ? "Provisional · Un decimal por asignatura" : "Con un decimal por asignatura";
       globalNormalEl.textContent  = safeFixed(g.normal, 2);
       globalNormalEl.style.color  = gradeColor(g.normal);
       globalRoundedEl.textContent = safeFixed(g.rounded, 1);
