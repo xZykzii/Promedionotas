@@ -22,6 +22,12 @@ evaluaciones, y recalcula el promedio en tiempo real a medida que se editan las 
   compara con la nota exacta, sin redondear; si faltan evaluaciones, se muestra una proyección.
   Al ingresar el examen, su nota final se incorpora a los promedios del semestre y global.
 - Limpiar notas conserva nombres, ponderaciones y reglas del ramo.
+- Apartado independiente de escala de notas (`#escala`): puntaje máximo, exigencia,
+  notas mínima/de aprobación/máxima, incremento decimal y orden ascendente o descendente.
+  Genera dos tramos lineales y permite consultar un puntaje directamente. La tabla muestra
+  un decimal; la aprobación y los colores usan la nota exacta.
+- Descarga de la escala como CSV UTF-8 para Excel e impresión de la tabla con sus parámetros.
+  Ajustes de escala guardados en el navegador, separados de los datos de asignaturas.
 - Exportación de los datos a JSON.
 - Dos modos de uso: local, con los datos guardados en el navegador, o con sesión de
   Google para sincronizarlos entre dispositivos.
@@ -35,3 +41,7 @@ opcional. Service worker y manifest, de modo que se instala como PWA.
 
 Ejecutar `node tests/calculations.cjs` desde el repositorio. Las pruebas comprueban la
 sintaxis del módulo y los cálculos reales de `index.html`, sin instalar dependencias.
+
+Para la escala, ejecutar `node tests/grade-scale.test.mjs`. Comprueba los dos tramos,
+precisión, límites de entrada, incrementos, orden, persistencia numérica y CSV. La escala
+no depende de Firebase ni de bibliotecas externas. Se limita a 2000 puntajes por tabla.

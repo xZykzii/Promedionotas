@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#17644b">
   <link rel="icon" href="/Promedionotas/icons/icon-192.png">
 
+  <script type="module" src="./grade-scale.mjs"></script>
   <style>
 
     :root {
@@ -228,6 +229,65 @@
       .exam-fields { grid-template-columns: 1fr; gap: 12px; }
       .exam-numbers { font-size: .85rem; }
     }
+    .tool-nav { display: flex; gap: 8px; margin: 0 0 26px; padding: 5px; border: 1px solid var(--border); border-radius: var(--rs); width: fit-content; background: var(--surface-soft); }
+    .tool-nav button { background: transparent; color: var(--text-soft); }
+    .tool-nav button[aria-pressed="true"] { background: var(--accent); color: white; }
+    .app.is-scale .intro, .app.is-scale .global-box, .app.is-scale #viewList, .app.is-scale #viewDetail { display: none !important; }
+    .app.is-scale .auth-bar { margin-top: 20px; }
+    .scale-controls, .scale-output { border: 1px solid var(--border); border-radius: var(--r); padding: 22px; background: var(--surface); }
+    .scale-controls { margin-bottom: 20px; }
+    .scale-fields { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 16px; }
+    .scale-fields .exam-field { font-size: .78rem; color: var(--text-soft); }
+    .scale-actions { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+    .scale-order { display: flex; flex-direction: column; gap: 8px; color: var(--text-soft); font-size: .78rem; margin-right: auto; }
+    .scale-order select { min-height: 42px; padding: 8px 12px; border: 1px solid var(--input-border); border-radius: var(--rx); color: var(--text); background: var(--input-bg); font: inherit; }
+    .scale-actions button:disabled { cursor: not-allowed; opacity: .5; }
+    .scale-error { color: var(--danger); padding: 16px; border: 1px solid var(--danger); border-radius: var(--rs); background: var(--surface); font-size: .85rem; }
+    .scale-overview { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .scale-minimum { font-size: 2.3rem; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .scale-overview .global-stat-label { white-space: nowrap; margin-bottom: 8px; }
+    .scale-overview .hint, .scale-overview .semester-count { margin: 0; }
+    .scale-lookup { display: flex; align-items: end; gap: 16px; padding: 16px; background: var(--card-soft); border-radius: var(--rs); margin-bottom: 24px; }
+    .scale-lookup label { width: 160px; flex-shrink: 0; font-size: .78rem; color: var(--text-soft); }
+    .scale-lookup output { font-size: .85rem; line-height: 1.7; padding-bottom: 8px; }
+    .scale-table-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); align-items: start; gap: 18px 12px; }
+    .scale-table { table-layout: auto; border: 1px solid var(--border); }
+    .scale-table th { background: var(--surface-soft); padding: 8px; text-transform: none; letter-spacing: 0; }
+    .scale-table td { padding: 5px 8px; font-variant-numeric: tabular-nums; }
+    .scale-table th:last-child, .scale-table td:last-child { text-align: right; }
+    .scale-table tbody tr:nth-child(even) { background: var(--card-soft); }
+    .scale-grade-fail { color: var(--danger); }
+    .scale-grade-pass { color: var(--accent); font-weight: 600; }
+    .scale-explanation { margin-top: 24px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    @media (max-width: 850px) { .scale-fields { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+    @media (max-width: 640px) {
+      .tool-nav { width: 100%; }
+      .tool-nav button { flex: 1; padding: 10px; }
+      .scale-controls, .scale-output { padding: 14px 12px; }
+      .scale-fields { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+      .scale-actions > * { flex: 1 1 40%; }
+      .scale-order { margin-right: 0; }
+      .scale-overview { align-items: flex-start; flex-direction: column; gap: 12px; }
+      .scale-overview > div:first-child { display: flex; align-items: center; gap: 12px; }
+      .scale-overview .global-stat-label { white-space: normal; margin: 0; }
+      .scale-lookup { align-items: stretch; flex-direction: column; gap: 10px; }
+      .scale-lookup label { width: 100%; }
+      .scale-order select { font-size: 16px; min-width: 0; width: 100%; }
+    }
+    @media print {
+      .app.is-scale { max-width: none; padding: 0; }
+      .app.is-scale .app-header, .app.is-scale .auth-bar, .app.is-scale .tool-nav,
+      .app.is-scale .app-footer, .app.is-scale .scale-controls, .app.is-scale .scale-lookup,
+      .app.is-scale .scale-explanation, .app.is-scale .scale-error { display: none !important; }
+      body:has(.app.is-scale) { background: white; color: black; }
+      .app.is-scale .scale-output { border: 0; padding: 0; background: white; }
+      .app.is-scale .scale-overview { break-after: avoid; }
+      .app.is-scale .scale-table-grid { grid-template-columns: repeat(6,minmax(0,1fr)); gap: 10px; }
+      .app.is-scale .scale-table { break-inside: avoid; font-size: 9pt; }
+      .app.is-scale .scale-table th, .app.is-scale .scale-table td { padding: 3px 5px; }
+      .toast-container { display: none !important; }
+    }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
@@ -258,6 +318,11 @@
         <button class="btn-secondary btn-mini" id="logoutBtn" style="display:none;">Cerrar sesión</button>
       </div>
     </div>
+
+    <nav class="tool-nav" aria-label="Herramientas académicas">
+      <button type="button" id="averagesToolBtn" aria-pressed="true" aria-controls="viewList viewDetail">Mis promedios</button>
+      <button type="button" id="scaleToolBtn" aria-pressed="false" aria-controls="viewScale">Escala de notas</button>
+    </nav>
 
     <section class="global-box" aria-label="Resumen académico">
       <div><div class="global-stat-label">Promedio global exacto</div>
@@ -295,6 +360,36 @@
       </div>
       <div id="semesterDetail"></div>
     </div>
+
+    <section id="viewScale" class="view" aria-labelledby="scaleTitle" hidden>
+      <div class="section-heading"><div><h2 id="scaleTitle">Escala de notas</h2><p>De puntajes a notas, con la exigencia que necesitas. Ajustes guardados en este navegador.</p></div></div>
+      <form id="scaleForm" class="scale-controls">
+        <div class="scale-fields">
+          <label class="exam-field">Puntaje máximo<input type="text" inputmode="decimal" name="maxScore" value="100" required></label>
+          <label class="exam-field">Exigencia (%)<input type="text" inputmode="decimal" name="requirement" value="60" required></label>
+          <label class="exam-field">Nota mínima<input type="text" inputmode="decimal" name="minGrade" value="1.0" required></label>
+          <label class="exam-field">Nota de aprobación<input type="text" inputmode="decimal" name="passGrade" value="4.0" required></label>
+          <label class="exam-field">Nota máxima<input type="text" inputmode="decimal" name="maxGrade" value="7.0" required></label>
+          <label class="exam-field">Incremento de puntaje<input type="text" inputmode="decimal" name="increment" value="1" required></label>
+        </div>
+        <div class="scale-actions">
+          <label class="scale-order">Orden<select name="order" aria-label="Orden"><option value="asc">Menor a mayor ↑</option><option value="desc">Mayor a menor ↓</option></select></label>
+          <button type="button" class="btn-secondary" id="scaleExportBtn">Excel (CSV)</button>
+          <button type="button" class="btn-secondary" id="scalePrintBtn">Imprimir</button>
+          <button type="submit" class="btn-primary">Generar tabla</button>
+        </div>
+      </form>
+      <p id="scaleError" class="scale-error" role="alert" hidden></p>
+      <div id="scaleOutput" class="scale-output">
+        <div class="scale-overview">
+          <div><div class="global-stat-label">Puntaje para aprobar</div><strong id="scaleMinimum" class="scale-minimum">60</strong></div>
+          <div><p id="scaleSummary" class="hint"></p><span id="scaleRowCount" class="semester-count"></span></div>
+        </div>
+        <div class="scale-lookup"><label class="exam-field">Consulta tu puntaje<input type="text" inputmode="decimal" id="scaleScore" placeholder="Ej: 75,5"></label><output id="scaleLookupResult" for="scaleScore" aria-live="polite">Ingresa tu puntaje para consultar la nota.</output></div>
+        <div id="scaleTableGrid" class="scale-table-grid"></div>
+        <details class="scale-explanation"><summary>Cómo se calcula</summary><p class="hint">La escala usa dos tramos lineales: desde 0 puntos y la nota mínima hasta el puntaje de exigencia y la nota de aprobación; luego, hasta el puntaje máximo y la nota máxima.</p><p class="hint">Las notas se muestran redondeadas a un decimal. Los colores y el estado de aprobación usan la nota exacta; por eso un 3,95 puede verse como 4,0 y seguir bajo la aprobación. El último puntaje siempre se incluye aunque no coincida con el incremento.</p></details>
+      </div>
+    </section>
 
     <footer class="app-footer"><span>promedios · Hecho para acompañar tu semestre.</span><span>Tus cambios se guardan automáticamente.</span></footer>
   </div>

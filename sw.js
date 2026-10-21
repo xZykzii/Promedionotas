@@ -1,9 +1,10 @@
-const CACHE_NAME = 'promedios-ubb-v4';
+const CACHE_NAME = 'promedios-ubb-v5';
 
 const ASSETS = [
   '/Promedionotas/',
   '/Promedionotas/index.html',
   '/Promedionotas/manifest.json',
+  '/Promedionotas/grade-scale.mjs',
   '/Promedionotas/sw.js',
   '/Promedionotas/icons/icon-192.png',
   '/Promedionotas/icons/icon-512.png'
