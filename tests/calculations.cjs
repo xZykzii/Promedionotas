@@ -18,7 +18,7 @@ const CONSTANT_NAMES = [
 const FUNCTION_NAMES = [
   "round1", "clamp", "norm", "parsePercent", "parseGrade", "safeFixed",
   "hasLegacySubGrades", "enableLegacySubGrades", "compactSubEvals", "evalGrade",
-  "computeSubject", "computeNeeded", "aggregateSubjects", "computeSemester", "computeGlobal",
+  "computeSubject", "computeNeeded", "aggregateSubjects", "computeSemester",
   "parseBoundedNumber", "normalizeExam", "evaluationPercent", "isEvaluationComplete",
   "isSubjectComplete", "examSettings", "ceilGrade", "examOutcome", "courseAverage"
 ];
@@ -38,7 +38,7 @@ const factories = ["emptyExam", "emptySubEval"].map(name => {
   return moduleCode.slice(start, moduleCode.indexOf(";", start) + 1);
 });
 const context = vm.createContext({});
-vm.runInContext([...declarations, ...factories, "let semestersData = [];", ...functions].join("\n"), context);
+vm.runInContext([...declarations, ...factories, ...functions].join("\n"), context);
 
 const FLOAT_TOLERANCE = 1e-9;
 let passed = 0;
@@ -178,15 +178,15 @@ near("redondeo del curso por separado", call("computeSemester", { subjects: [sub
 near("redondeo seguro hacia arriba", call("ceilGrade", 4.75000000001), 4.8);
 near("no sube décima por error binario", call("ceilGrade", 5.500000000000001), 5.5);
 
-// El promedio global combina notas finales y marca las presentaciones pendientes.
-context.globalFixture = [{ subjects: [subject(3.5, { grade: "4.8" }), subject(5.24)] }];
-vm.runInContext("semestersData = globalFixture;", context);
-near("global mezcla finales exactos", call("computeGlobal").normal, 4.63);
-near("global redondea por asignatura", call("computeGlobal").rounded, 4.6);
-check("global completo no es provisional", call("computeGlobal").isProvisional, false);
-context.globalFixture = [{ subjects: [subject(3.5), subject(5.24)] }];
-vm.runInContext("semestersData = globalFixture;", context);
-check("global señala examen pendiente", call("computeGlobal").isProvisional, true);
+// Cada semestre usa exclusivamente sus propios ramos y finales.
+const firstSemester = { subjects: [subject(3.5, { grade: "4.8" })] };
+const secondSemester = { subjects: [subject(5.24)] };
+near("primer semestre conserva su final", call("computeSemester", firstSemester).normal, 4.02);
+near("segundo semestre tiene su propio promedio", call("computeSemester", secondSemester).normal, 5.24);
+secondSemester.subjects[0].evaluations[0].grade = "2";
+near("editar otro semestre no altera el primero", call("computeSemester", firstSemester).normal, 4.02);
+check("primer semestre completo", call("computeSemester", firstSemester).isProvisional, false);
+check("segundo semestre con examen pendiente", call("computeSemester", secondSemester).isProvisional, true);
 partial.exam.grade = "6";
 check("examen ingresado no completa evaluaciones pendientes", call("examOutcome", partial).status, "provisional");
 near("promedio parcial no se sustituye por final proyectado", call("courseAverage", partial).avg, 5);

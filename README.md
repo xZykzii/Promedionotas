@@ -11,7 +11,7 @@ evaluaciones, y recalcula el promedio en tiempo real a medida que se editan las 
 - Estructura en tres niveles: semestres → asignaturas → evaluaciones, con subevaluaciones
   y ponderaciones propias. Las filas totalmente vacías sobrantes se limpian al abrir
   una asignatura; agregar una subevaluación reutiliza la fila vacía existente.
-- Promedio por asignatura, por semestre y global, en versión exacta y redondeada
+- Promedio por asignatura y por semestre, en versión exacta y redondeada
   (redondeo configurable, con opción de un decimal por ramo).
 - Cálculo de la nota que se necesita en lo que queda para aprobar y ponderaciones iguales.
 - Integradora/examen por asignatura: por defecto, presentación de 4,0 o más aprueba
@@ -20,7 +20,7 @@ evaluaciones, y recalcula el promedio en tiempo real a medida que se editan las 
   No hay una restricción de acceso al examen por tramo de notas.
 - Nota necesaria del examen redondeada hacia arriba a un decimal. La aprobación se
   compara con la nota exacta, sin redondear; si faltan evaluaciones, se muestra una proyección.
-  Al ingresar el examen, su nota final se incorpora a los promedios del semestre y global.
+  Al ingresar el examen, su nota final se incorpora al promedio de su semestre. No se calcula un promedio general entre semestres.
 - Limpiar notas conserva nombres, ponderaciones y reglas del ramo.
 - Apartado independiente de escala de notas (`#escala`): puntaje máximo, exigencia,
   notas mínima/de aprobación/máxima, incremento decimal y orden ascendente o descendente.

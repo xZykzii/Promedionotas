@@ -47,7 +47,7 @@
     .intro p:last-child { margin: 12px 0 0; color: var(--text-soft); font-size: .9rem; line-height: 1.6; }
     .intro-note { max-width: 180px; font-size: .8rem; color: var(--text-soft); line-height: 1.6; border-left: 2px solid var(--border-light); padding-left: 16px; }
     .intro-note strong { display: block; color: var(--accent); font-size: 1.3rem; }
-    .app.is-detail .intro, .app.is-detail .global-box { display: none; }
+    .app.is-detail .intro { display: none; }
     .app.is-detail .auth-bar { margin-top: 20px; }
     .auth-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--rs); margin-bottom: 26px; }
     .auth-status { display: flex; align-items: center; gap: 9px; font-size: .8rem; color: var(--text-soft); }
@@ -67,13 +67,7 @@
     .btn-ghost { color: var(--text-soft); background: transparent; border-color: var(--border-light); }
     .btn-ghost:hover { background: var(--surface-soft); }
     .btn-mini { min-height: 36px; padding: 7px 11px; font-size: .75rem; }
-    .global-box { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; margin: 0 0 36px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
-    .global-box > div { padding: 24px; }
-    .global-box > div + div { border-left: 1px solid var(--border); }
-    .global-box > div:first-child { background: var(--surface-accent); }
-    .global-stat-label { font-size: .75rem; color: var(--text-soft); margin-bottom: 14px; }
-    .global-stat-value { font-size: 2.7rem; font-weight: 650; letter-spacing: -1.5px; line-height: 1; font-variant-numeric: tabular-nums; }
-    .global-stat-sub { font-size: .72rem; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+    .stat-label { font-size: .75rem; color: var(--text-soft); margin-bottom: 14px; }
     .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
     .section-heading h2 { font-size: 1.15rem; letter-spacing: -.4px; margin: 0 0 4px; }
     .section-heading p { color: var(--text-soft); font-size: .8rem; margin: 0; }
@@ -165,14 +159,7 @@
       .header-tag, .intro-note { display: none; }
       .intro { padding: 30px 0 24px; }
       .intro h2 { letter-spacing: -1px; }
-      .global-box { grid-template-columns: 1fr 1fr; margin-bottom: 28px; }
-      .global-box > div { padding: 18px; }
-      .global-box > div:last-child { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 14px; }
-      .global-box > div:last-child .global-stat-label { margin: 0; }
-      .global-box > div:last-child .global-stat-value { font-size: 1.5rem; order: -1; }
-      .global-box > div:last-child .global-stat-sub { margin: 0 0 0 auto; }
-      .global-stat-value { font-size: 2.25rem; }
-      .global-stat-label { font-size: .7rem; }
+      .stat-label { font-size: .7rem; }
       .semester-list { grid-template-columns: 1fr; }
       .top-bar { gap: 7px; }
       .top-bar > * { flex: 1 1 auto; justify-content: center; }
@@ -232,7 +219,7 @@
     .tool-nav { display: flex; gap: 8px; margin: 0 0 26px; padding: 5px; border: 1px solid var(--border); border-radius: var(--rs); width: fit-content; background: var(--surface-soft); }
     .tool-nav button { background: transparent; color: var(--text-soft); }
     .tool-nav button[aria-pressed="true"] { background: var(--accent); color: white; }
-    .app.is-scale .intro, .app.is-scale .global-box, .app.is-scale #viewList, .app.is-scale #viewDetail { display: none !important; }
+    .app.is-scale .intro, .app.is-scale #viewList, .app.is-scale #viewDetail { display: none !important; }
     .app.is-scale .auth-bar { margin-top: 20px; }
     .scale-controls, .scale-output { border: 1px solid var(--border); border-radius: var(--r); padding: 22px; background: var(--surface); }
     .scale-controls { margin-bottom: 20px; }
@@ -245,7 +232,7 @@
     .scale-error { color: var(--danger); padding: 16px; border: 1px solid var(--danger); border-radius: var(--rs); background: var(--surface); font-size: .85rem; }
     .scale-overview { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
     .scale-minimum { font-size: 2.3rem; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
-    .scale-overview .global-stat-label { white-space: nowrap; margin-bottom: 8px; }
+    .scale-overview .stat-label { white-space: nowrap; margin-bottom: 8px; }
     .scale-overview .hint, .scale-overview .semester-count { margin: 0; }
     .scale-lookup { display: flex; align-items: end; gap: 16px; padding: 16px; background: var(--card-soft); border-radius: var(--rs); margin-bottom: 24px; }
     .scale-lookup label { width: 160px; flex-shrink: 0; font-size: .78rem; color: var(--text-soft); }
@@ -270,7 +257,7 @@
       .scale-order { margin-right: 0; }
       .scale-overview { align-items: flex-start; flex-direction: column; gap: 12px; }
       .scale-overview > div:first-child { display: flex; align-items: center; gap: 12px; }
-      .scale-overview .global-stat-label { white-space: normal; margin: 0; }
+      .scale-overview .stat-label { white-space: normal; margin: 0; }
       .scale-lookup { align-items: stretch; flex-direction: column; gap: 10px; }
       .scale-lookup label { width: 100%; }
       .scale-order select { font-size: 16px; min-width: 0; width: 100%; }
@@ -324,18 +311,6 @@
       <button type="button" id="scaleToolBtn" aria-pressed="false" aria-controls="viewScale">Escala de notas</button>
     </nav>
 
-    <section class="global-box" aria-label="Resumen académico">
-      <div><div class="global-stat-label">Promedio global exacto</div>
-        <div class="global-stat-value" id="globalNormal">—</div>
-        <div class="global-stat-sub">Calculado con las notas sin redondear</div></div>
-      <div><div class="global-stat-label">Promedio global redondeado</div>
-        <div class="global-stat-value" id="globalRounded">—</div>
-        <div class="global-stat-sub">Con un decimal por asignatura</div></div>
-      <div><div class="global-stat-label">Semestres en tu recorrido</div>
-        <div class="global-stat-value" id="semesterCount">0</div>
-        <div class="global-stat-sub">Paso a paso, a tu ritmo.</div></div>
-    </section>
-
     <div id="viewList" class="view">
       <div class="section-heading">
         <div><h2>Mis semestres</h2><p>Todo tu recorrido académico, en un lugar.</p></div>
@@ -382,7 +357,7 @@
       <p id="scaleError" class="scale-error" role="alert" hidden></p>
       <div id="scaleOutput" class="scale-output">
         <div class="scale-overview">
-          <div><div class="global-stat-label">Puntaje para aprobar</div><strong id="scaleMinimum" class="scale-minimum">60</strong></div>
+          <div><div class="stat-label">Puntaje para aprobar</div><strong id="scaleMinimum" class="scale-minimum">60</strong></div>
           <div><p id="scaleSummary" class="hint"></p><span id="scaleRowCount" class="semester-count"></span></div>
         </div>
         <div class="scale-lookup"><label class="exam-field">Consulta tu puntaje<input type="text" inputmode="decimal" id="scaleScore" placeholder="Ej: 75,5"></label><output id="scaleLookupResult" for="scaleScore" aria-live="polite">Ingresa tu puntaje para consultar la nota.</output></div>
@@ -432,8 +407,6 @@
     const viewDetail       = document.getElementById("viewDetail");
     const semesterListEl   = document.getElementById("semesterList");
     const semesterDetailEl = document.getElementById("semesterDetail");
-    const globalNormalEl   = document.getElementById("globalNormal");
-    const globalRoundedEl  = document.getElementById("globalRounded");
     const syncDotEl        = document.getElementById("syncDot");
     const userInfoEl       = document.getElementById("userInfo");
     const loginBtn         = document.getElementById("loginBtn");
@@ -530,7 +503,7 @@
 
     function scheduleLightRender() {
       clearTimeout(lightTimer);
-      lightTimer = setTimeout(() => { renderSemesterList(); renderGlobalAverage(); }, 200);
+      lightTimer = setTimeout(() => { renderSemesterList(); }, 200);
     }
 
     function hasLegacySubGrades(ev) {
@@ -675,11 +648,6 @@
 
     function computeSemester(sem) {
       return aggregateSubjects((sem.subjects || []).map(sub => ({ sub, useWeights: sem.useWeights })));
-    }
-
-    function computeGlobal() {
-      return aggregateSubjects(semestersData.flatMap(sem =>
-        (sem.subjects || []).map(sub => ({ sub, useWeights: sem.useWeights }))));
     }
 
     /* ── Integradora y ponderaciones ── */
@@ -973,7 +941,6 @@
        RENDER LIST
     ────────────────────────────── */
     function renderSemesterList() {
-      document.getElementById("semesterCount").textContent = semestersData.length;
       semesterListEl.innerHTML = "";
       if (!semestersData.length) {
         semesterListEl.innerHTML = `<div class="empty-msg"><strong>Tu próximo semestre comienza aquí.</strong>Agrega un semestre y luego tus asignaturas. Nosotros hacemos las cuentas.</div>`;
@@ -1034,7 +1001,6 @@
           semestersData.splice(idx, 1);
           scheduleSave();
           renderSemesterList();
-          renderGlobalAverage();
         };
 
         actions.append(openBtn, delBtn);
@@ -1435,28 +1401,6 @@
     }
 
     /* ──────────────────────────────
-       GLOBAL AVERAGE
-    ────────────────────────────── */
-    function renderGlobalAverage() {
-      const g = computeGlobal();
-      if (!g) {
-        globalNormalEl.nextElementSibling.textContent = "Calculado con las notas sin redondear";
-        globalRoundedEl.nextElementSibling.textContent = "Con un decimal por asignatura";
-        globalNormalEl.textContent = "—"; globalNormalEl.style.color = "";
-        globalRoundedEl.textContent = "—"; globalRoundedEl.style.color = "";
-        return;
-      }
-      globalNormalEl.nextElementSibling.textContent = g.isProvisional
-        ? "Provisional: incluye notas de presentación" : "Calculado con las notas sin redondear";
-      globalRoundedEl.nextElementSibling.textContent = g.isProvisional
-        ? "Provisional · Un decimal por asignatura" : "Con un decimal por asignatura";
-      globalNormalEl.textContent  = safeFixed(g.normal, 2);
-      globalNormalEl.style.color  = gradeColor(g.normal);
-      globalRoundedEl.textContent = safeFixed(g.rounded, 1);
-      globalRoundedEl.style.color = gradeColor(g.rounded);
-    }
-
-    /* ──────────────────────────────
        AUTH
     ────────────────────────────── */
     loginBtn.onclick  = () => signInWithPopup(auth, provider).catch(e => { console.error(e); toast("No se pudo iniciar sesión.", "err"); });
@@ -1477,7 +1421,7 @@
       const local = loadFromLocal();
       if (!u) {
         semestersData = local.semesters || [];
-        renderSemesterList(); renderGlobalAverage(); showListView(); return;
+        renderSemesterList(); showListView(); return;
       }
 
       const remote  = await loadFromRemote(u);
@@ -1496,7 +1440,7 @@
       }
 
       setSyncDot("synced");
-      renderSemesterList(); renderGlobalAverage(); showListView();
+      renderSemesterList(); showListView();
     });
 
     /* ──────────────────────────────
@@ -1504,11 +1448,11 @@
     ────────────────────────────── */
     addSemesterBtn.onclick = () => {
       semestersData.push(emptySemester());
-      scheduleSave(); renderSemesterList(); renderGlobalAverage();
+      scheduleSave(); renderSemesterList();
     };
 
     recalcAllBtn.onclick = () => {
-      renderSemesterList(); renderGlobalAverage();
+      renderSemesterList();
       if (viewDetail.style.display === "block") renderSemesterDetail();
     };
 
@@ -1517,7 +1461,7 @@
       semestersData = [];
       localStorage.removeItem(LOCAL_KEY);
       await clearRemote();
-      renderSemesterList(); renderGlobalAverage(); showListView();
+      renderSemesterList(); showListView();
     };
 
     backBtn.onclick = () => { syncDetailToData(); showListView(); };
@@ -1527,7 +1471,7 @@
       semestersData.splice(selectedIdx, 1);
       selectedIdx = null;
       await saveData();
-      renderSemesterList(); renderGlobalAverage(); showListView();
+      renderSemesterList(); showListView();
     };
 
     /* ──────────────────────────────
@@ -1551,7 +1495,7 @@
         if (!confirm("Esto reemplazará tus datos actuales. ¿Continuar?")) return;
         semestersData = imported;
         await saveData();
-        renderSemesterList(); renderGlobalAverage(); showListView();
+        renderSemesterList(); showListView();
         toast("Importado correctamente ✓", "ok");
       } catch (err) {
         console.error(err);
@@ -1565,7 +1509,7 @@
     (function init() {
       const local = loadFromLocal();
       semestersData = local.semesters || [];
-      renderSemesterList(); renderGlobalAverage(); showListView();
+      renderSemesterList(); showListView();
     })();
   </script>
 
